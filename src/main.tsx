@@ -5,14 +5,6 @@ import App from './App.tsx';
 import './index.css';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 
-// Import fonts
-import '@fontsource/open-sans/400.css';
-import '@fontsource/open-sans/600.css';
-import '@fontsource/open-sans/700.css';
-import '@fontsource/playfair-display/400.css';
-import '@fontsource/playfair-display/600.css';
-import '@fontsource/playfair-display/700.css';
-
 // Define font variables for Tailwind
 import { createGlobalStyle } from 'styled-components';
 

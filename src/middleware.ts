@@ -1,54 +1,38 @@
 
-import { NextRequest, NextResponse } from 'next/server'
-import { authMiddleware } from "@clerk/nextjs";
+// Create a placeholder middleware file that works with Vite instead of Next.js
+// This replaces the Next.js specific middleware with something that works in our environment
 
-// CSP Headers setup
-const securityHeaders = [
-  {
-    key: 'Content-Security-Policy',
-    value: "default-src 'self'; font-src 'self' https://fonts.googleapis.com https://fonts.gstatic.com; img-src 'self' https://images.unsplash.com data:; script-src 'self' 'unsafe-eval' 'unsafe-inline'; style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; connect-src 'self' https://api.clerk.dev;"
-  },
-  {
-    key: 'X-Content-Type-Options',
-    value: 'nosniff'
-  },
-  {
-    key: 'X-Frame-Options',
-    value: 'DENY'
-  },
-  {
-    key: 'X-XSS-Protection',
-    value: '1; mode=block'
-  },
-  {
-    key: 'Referrer-Policy',
-    value: 'strict-origin-when-cross-origin'
-  },
-  {
-    key: 'Permissions-Policy',
-    value: 'camera=(), microphone=(), geolocation=(), interest-cohort=()'
-  }
-];
+import { clerkClient } from '@clerk/clerk-react';
 
-// Apply rate limiting middleware
-export async function middleware(request: NextRequest) {
-  // Apply security headers
-  const response = NextResponse.next();
-  
-  // Set security headers
-  securityHeaders.forEach(({ key, value }) => {
-    response.headers.set(key, value);
-  });
-  
-  return response;
-}
-
-export default authMiddleware({
-  beforeAuth: (req) => middleware(req),
-  publicRoutes: ["/", "/login", "/sign-up"],
-});
-
-// Configure the middleware
-export const config = {
-  matcher: ['/((?!_next/static|_next/image|favicon.ico).*)'],
+// Simple middleware implementation compatible with our Vite setup
+export const middleware = () => {
+  console.log('Middleware running in non-Next.js environment');
+  return null;
 };
+
+// Rate limiting implementation (simplified for Vite environment)
+export const rateLimiter = {
+  counter: new Map<string, { count: number, timestamp: number }>(),
+  
+  check: (ip: string, limit = 10, windowMs = 60000) => {
+    const now = Date.now();
+    const record = rateLimiter.counter.get(ip) || { count: 0, timestamp: now };
+    
+    // Reset if window has passed
+    if (now - record.timestamp > windowMs) {
+      record.count = 0;
+      record.timestamp = now;
+    }
+    
+    record.count++;
+    rateLimiter.counter.set(ip, record);
+    
+    return record.count <= limit;
+  }
+};
+
+// Export config to avoid errors if referenced
+export const config = {
+  matcher: ['/((?!.*\\..*|_next).*)', '/', '/(api|trpc)(.*)'],
+};
+

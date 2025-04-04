@@ -1,53 +1,56 @@
 
-import { clsx, type ClassValue } from "clsx";
+import { type ClassValue, clsx } from "clsx";
 import { twMerge } from "tailwind-merge";
-import crypto from 'crypto-js';
+import CryptoJS from "crypto-js";
 
-// Utility function for combining Tailwind CSS classes
+// Utility function to combine tailwind classes
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
 }
 
-// Field level encryption utilities
-export const encryptData = (data: string, secretKey: string): string => {
-  return crypto.AES.encrypt(data, secretKey).toString();
+// Field-level encryption utils
+export const fieldEncryption = {
+  encrypt: (value: string, key: string): string => {
+    return CryptoJS.AES.encrypt(value, key).toString();
+  },
+  
+  decrypt: (encryptedValue: string, key: string): string => {
+    const bytes = CryptoJS.AES.decrypt(encryptedValue, key);
+    return bytes.toString(CryptoJS.enc.Utf8);
+  }
 };
 
-export const decryptData = (encryptedData: string, secretKey: string): string => {
-  const bytes = crypto.AES.decrypt(encryptedData, secretKey);
-  return bytes.toString(crypto.enc.Utf8);
-};
+// Format currency
+export function formatCurrency(amount: number): string {
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+  }).format(amount);
+}
 
-// Rate limiting utilities
-export class RateLimiter {
-  private windowMs: number;
-  private maxRequests: number;
-  private clients: Map<string, number[]>;
+// Parse URL parameters
+export function parseUrlParams(url: string): Record<string, string> {
+  const params: Record<string, string> = {};
+  const queryString = url.split('?')[1];
+  
+  if (!queryString) return params;
+  
+  const urlParams = new URLSearchParams(queryString);
+  urlParams.forEach((value, key) => {
+    params[key] = value;
+  });
+  
+  return params;
+}
 
-  constructor(windowMs = 60000, maxRequests = 100) {
-    this.windowMs = windowMs;
-    this.maxRequests = maxRequests;
-    this.clients = new Map();
+// Generate random ID
+export function generateId(length: number = 10): string {
+  const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  
+  for (let i = 0; i < length; i++) {
+    result += characters.charAt(Math.floor(Math.random() * characters.length));
   }
-
-  check(clientId: string): boolean {
-    const now = Date.now();
-    
-    // Get or initialize request timestamps for this client
-    let requests = this.clients.get(clientId) || [];
-    
-    // Filter out requests outside the time window
-    requests = requests.filter(time => now - time < this.windowMs);
-    
-    // Check if client has exceeded the rate limit
-    if (requests.length >= this.maxRequests) {
-      return false;
-    }
-    
-    // Add current request timestamp
-    requests.push(now);
-    this.clients.set(clientId, requests);
-    
-    return true;
-  }
+  
+  return result;
 }
