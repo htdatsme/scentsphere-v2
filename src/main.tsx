@@ -4,6 +4,7 @@ import { ClerkProvider } from '@clerk/clerk-react';
 import App from './App.tsx';
 import './index.css';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
+import { ThemeProvider } from './components/ui/theme-provider';
 
 // Define font variables for Tailwind
 import { createGlobalStyle } from 'styled-components';
@@ -31,18 +32,22 @@ const AppWrapper = () => {
   // If no key available, just render the app without Clerk
   if (!PUBLISHABLE_KEY) {
     return (
-      <QueryClientProvider client={queryClient}>
-        <App />
-      </QueryClientProvider>
+      <ThemeProvider defaultTheme="light" storageKey="scentsphere-theme">
+        <QueryClientProvider client={queryClient}>
+          <App />
+        </QueryClientProvider>
+      </ThemeProvider>
     );
   }
   
   // With key, use ClerkProvider
   return (
     <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
-      <QueryClientProvider client={queryClient}>
-        <App />
-      </QueryClientProvider>
+      <ThemeProvider defaultTheme="light" storageKey="scentsphere-theme">
+        <QueryClientProvider client={queryClient}>
+          <App />
+        </QueryClientProvider>
+      </ThemeProvider>
     </ClerkProvider>
   );
 };

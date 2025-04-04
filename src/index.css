@@ -4,6 +4,7 @@
 @tailwind utilities;
 
 @layer base {
+  /* Light theme (default) */
   :root {
     --background: 0 0% 100%;
     --foreground: 240 10% 3.9%;
@@ -25,8 +26,23 @@
     --input: 240 5.9% 90%;
     --ring: 267 75% 31%;
     --radius: 0.5rem;
+
+    /* Fragrance-specific colors */
+    --amber: 30 90% 60%;
+    --amber-foreground: 30 10% 10%;
+    --floral: 330 70% 75%;
+    --floral-foreground: 330 10% 10%;
+    --woody: 25 50% 40%;
+    --woody-foreground: 0 0% 98%;
+    --citrus: 40 100% 60%;
+    --citrus-foreground: 40 10% 10%;
+    --aquatic: 195 80% 65%;
+    --aquatic-foreground: 195 10% 10%;
+    --oriental: 15 70% 50%;
+    --oriental-foreground: 0 0% 98%;
   }
  
+  /* Dark theme */
   .dark {
     --background: 20 14.3% 4.1%;
     --foreground: 0 0% 95%;
@@ -47,6 +63,57 @@
     --border: 240 3.7% 15.9%;
     --input: 240 3.7% 15.9%;
     --ring: 267 72% 41%;
+
+    /* Fragrance-specific colors - dark mode variants */
+    --amber: 30 80% 50%;
+    --amber-foreground: 0 0% 98%;
+    --floral: 330 60% 60%;
+    --floral-foreground: 0 0% 98%;
+    --woody: 25 40% 30%;
+    --woody-foreground: 0 0% 98%;
+    --citrus: 40 90% 50%;
+    --citrus-foreground: 0 0% 98%;
+    --aquatic: 195 70% 45%;
+    --aquatic-foreground: 0 0% 98%;
+    --oriental: 15 60% 40%;
+    --oriental-foreground: 0 0% 98%;
+  }
+
+  /* Professional theme */
+  .professional {
+    --background: 220 20% 97%;
+    --foreground: 220 20% 10%;
+    --card: 0 0% 100%;
+    --card-foreground: 220 20% 10%;
+    --popover: 0 0% 100%;
+    --popover-foreground: 220 20% 10%;
+    --primary: 220 60% 30%;
+    --primary-foreground: 0 0% 98%;
+    --secondary: 220 10% 90%;
+    --secondary-foreground: 220 20% 10%;
+    --muted: 220 10% 94%;
+    --muted-foreground: 220 10% 40%;
+    --accent: 220 40% 40%;
+    --accent-foreground: 0 0% 98%;
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 220 20% 85%;
+    --input: 220 20% 85%;
+    --ring: 220 60% 30%;
+
+    /* Fragrance-specific colors - professional variants */
+    --amber: 30 40% 45%;
+    --amber-foreground: 0 0% 98%;
+    --floral: 330 30% 50%;
+    --floral-foreground: 0 0% 98%;
+    --woody: 25 30% 35%;
+    --woody-foreground: 0 0% 98%;
+    --citrus: 40 50% 45%;
+    --citrus-foreground: 0 0% 98%;
+    --aquatic: 195 40% 40%;
+    --aquatic-foreground: 0 0% 98%;
+    --oriental: 15 40% 45%;
+    --oriental-foreground: 0 0% 98%;
   }
 }
 
@@ -63,5 +130,32 @@
   }
   p, span, button, input, textarea, select {
     @apply font-sans;
+  }
+}
+
+@layer utilities {
+  .glass {
+    @apply backdrop-blur-md bg-background/60 border border-border/30;
+  }
+  
+  .scent-card {
+    @apply transition-all duration-300 hover:shadow-lg;
+  }
+
+  .animated-gradient {
+    background-size: 200% 200%;
+    animation: gradient 5s ease infinite;
+  }
+  
+  @keyframes gradient {
+    0% {
+      background-position: 0% 50%;
+    }
+    50% {
+      background-position: 100% 50%;
+    }
+    100% {
+      background-position: 0% 50%;
+    }
   }
 }
