@@ -12,7 +12,8 @@ export type QuizFactorId =
   | 'previous_favorites'
   | 'allergies'
   | 'time_of_day'
-  | 'environment';
+  | 'environment'
+  | 'gender';  // Added gender to the QuizFactorId type
 
 export type NoteAffinity = {
   note: string;

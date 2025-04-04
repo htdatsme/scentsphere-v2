@@ -178,10 +178,12 @@ export const generateRecommendations = async (
       }
     });
     
-    // Match gender preference
-    if (profile.factors.gender === fragrance.gender || 
-        fragrance.gender === 'unisex') {
-      score += 5;
+    // Match gender preference if available
+    if (profile.factors.gender) {
+      if (profile.factors.gender === fragrance.gender || 
+          fragrance.gender === 'unisex') {
+        score += 5;
+      }
     }
     
     // Match season preference

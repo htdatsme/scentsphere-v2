@@ -1,5 +1,4 @@
-
-import * as tf from '@tensorflow/core';
+import * as tf from '@tensorflow/tfjs';
 
 // This is a simplified TF.js integration for demonstration purposes
 // In a real application, you would use a properly trained model

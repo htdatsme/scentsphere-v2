@@ -1,4 +1,3 @@
-
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
@@ -8,8 +7,6 @@ import { useRecommendationStore, UserPreferences } from "@/lib/store";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
-import { Slider } from "@/components/ui/slider";
-import { Checkbox } from "@/components/ui/checkbox";
 import { quizFactors } from "@/lib/data/quizFactors";
 import { UserQuizAnswers, QuizFactorId } from "@/types/quiz";
 import { generateScentProfile } from "@/lib/ml/scentProfileGenerator";
@@ -34,11 +31,6 @@ const RecommendationQuiz = () => {
       priceRange: [30, 200],
     };
 
-    // Map gender preference
-    if (answers.gender) {
-      userPreferences.gender = answers.gender as 'masculine' | 'feminine' | 'unisex';
-    }
-
     // Map occasions
     if (answers.occasion) {
       userPreferences.occasions = [answers.occasion];
@@ -53,6 +45,11 @@ const RecommendationQuiz = () => {
     // Map seasonal preferences
     if (answers.season) {
       userPreferences.seasonalPreferences = [answers.season];
+    }
+
+    // Handle gender if it exists in the quiz answers
+    if (answers.gender) {
+      userPreferences.gender = answers.gender as 'masculine' | 'feminine' | 'unisex';
     }
 
     return userPreferences;
