@@ -7,15 +7,17 @@ import { useState } from 'react';
 import ThemeSwitcher from './ThemeSwitcher';
 
 const Header = () => {
-  const { signOut } = useClerk();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   // Check if Clerk is available (has publishable key)
   const isClerkAvailable = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
-
+  
+  // Only use the useClerk hook if Clerk is available
+  const clerkInstance = isClerkAvailable ? useClerk() : null;
+  
   const handleSignOut = () => {
-    if (isClerkAvailable) {
-      signOut();
+    if (isClerkAvailable && clerkInstance) {
+      clerkInstance.signOut();
     }
   };
 
