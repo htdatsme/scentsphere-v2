@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useRecommendationStore } from "@/lib/store";
@@ -32,40 +31,33 @@ const Results = () => {
   const [favorites, setFavorites] = useState<number[]>([]);
 
   useEffect(() => {
-    // Load recommendations
     const loadRecommendations = async () => {
       if (!userPreferences) return;
       
       setLoading(true);
       
       try {
-        // Try to get the raw quiz answers from localStorage for better ML predictions
         const savedAnswers = localStorage.getItem('lastQuizAnswers');
         const quizAnswers: UserQuizAnswers = savedAnswers 
           ? JSON.parse(savedAnswers) 
           : {};
           
-        // Generate scent profile
         const profile = await generateScentProfile(quizAnswers);
         setScentProfile(profile);
         
-        // Generate recommendations
         const recommendedFragrances = await generateRecommendations(profile);
         setRecommendations(recommendedFragrances);
         
-        // Load saved favorites
         const savedFavorites = localStorage.getItem('favoriteFragrances');
         if (savedFavorites) {
           setFavorites(JSON.parse(savedFavorites));
         }
         
-        // Feedback success
         toast.success("Your personalized recommendations are ready!");
       } catch (error) {
         console.error("Error generating recommendations:", error);
         toast.error("There was an issue generating your recommendations");
         
-        // Fallback to sample data
         setRecommendations(fragrances.slice(0, 6));
       } finally {
         setLoading(false);
@@ -75,12 +67,10 @@ const Results = () => {
     loadRecommendations();
   }, [userPreferences, setRecommendations, setLoading]);
 
-  // Handle note preference feedback
   const handleNoteFeedback = async (note: string, liked: boolean) => {
     if (!scentProfile) return;
     
     try {
-      // Update liked/disliked state
       if (liked) {
         setLikedNotes(prev => [...prev.filter(n => n !== note), note]);
         setDislikedNotes(prev => prev.filter(n => n !== note));
@@ -91,12 +81,10 @@ const Results = () => {
         toast.success(`Added ${note} to your disliked notes`);
       }
       
-      // Get stored quiz answers for ML training
       const savedAnswers = localStorage.getItem('lastQuizAnswers');
       if (savedAnswers) {
         const quizAnswers: UserQuizAnswers = JSON.parse(savedAnswers);
         
-        // Train model with this feedback
         await scentModel.learnFromFeedback(
           quizAnswers, 
           liked ? [note] : [], 
@@ -123,7 +111,6 @@ const Results = () => {
     localStorage.setItem('favoriteFragrances', JSON.stringify(newFavorites));
   };
 
-  // Display star rating
   const renderRating = (rating: number) => {
     const fullStars = Math.floor(rating);
     const hasHalfStar = rating % 1 >= 0.5;
@@ -169,7 +156,6 @@ const Results = () => {
             </p>
           </div>
 
-          {/* Scent profile visualization */}
           {scentProfile && (
             <Card className="mb-10 premium-card backdrop-blur-sm bg-background/80">
               <CardHeader>
@@ -248,7 +234,7 @@ const Results = () => {
                       <div className="aspect-square overflow-hidden relative">
                         <OptimizedImage 
                           src={fragrance.imageUrl} 
-                          alt={fragrance.name}
+                          alt={`${fragrance.brand} - ${fragrance.name}`}
                           className="w-full h-full object-cover transition-transform group-hover:scale-105"
                           width={400}
                           height={400}
@@ -280,7 +266,7 @@ const Results = () => {
                         <div className="flex flex-wrap gap-2 mb-4">
                           {fragrance.notes.slice(0, 3).map((note) => (
                             <span 
-                              key={note.name} 
+                              key={`${fragrance.id}-${note.name}`} 
                               className="text-xs bg-secondary/70 text-secondary-foreground px-2 py-1 rounded-full"
                             >
                               {note.name}
@@ -324,7 +310,7 @@ const Results = () => {
                       <div className="aspect-square overflow-hidden relative">
                         <OptimizedImage 
                           src={fragrance.imageUrl} 
-                          alt={fragrance.name}
+                          alt={`${fragrance.brand} - ${fragrance.name}`}
                           className="w-full h-full object-cover transition-transform group-hover:scale-105"
                           width={500}
                           height={500}
@@ -407,7 +393,7 @@ const Results = () => {
                       <div className="aspect-square overflow-hidden">
                         <OptimizedImage 
                           src={fragrance.imageUrl} 
-                          alt={fragrance.name}
+                          alt={`${fragrance.brand} - ${fragrance.name}`}
                           className="w-full h-full object-cover transition-transform group-hover:scale-105"
                           width={300}
                           height={300}

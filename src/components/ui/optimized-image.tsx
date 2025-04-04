@@ -1,4 +1,3 @@
-
 import { useState, useEffect } from 'react';
 
 interface OptimizedImageProps {
@@ -26,49 +25,78 @@ export const OptimizedImage = ({
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
 
-  // Generate optimized URL if it's a direct image URL
-  const getOptimizedUrl = (url: string) => {
-    // Fix broken image URLs that might be using incorrect placeholders
-    if (url.includes('unsplash.com') && (url.includes('placeholder') || url.endsWith('undefined'))) {
-      return `/lovable-uploads/682b0349-496e-4ebb-b8a6-f92faa47d542.png`;
+  const brandFallbacks: Record<string, string> = {
+    'Le Labo': 'https://i.imgur.com/gXuZmh6.jpg',
+    'Creed': 'https://i.imgur.com/jSsGtAs.jpg',
+    'Maison Francis Kurkdjian': 'https://i.imgur.com/QVKzs0R.jpg',
+    'Chanel': 'https://i.imgur.com/e6FpB9s.jpg',
+    'Tom Ford': 'https://i.imgur.com/OfJ5VXo.jpg',
+    'Dolce & Gabbana': 'https://i.imgur.com/VYcN5jR.jpg',
+    'Dior': 'https://i.imgur.com/hzpYNBk.jpg',
+    'Giorgio Armani': 'https://i.imgur.com/VYcN5jR.jpg',
+    'Lancôme': 'https://i.imgur.com/zMV5AaD.jpg',
+    'Hermès': 'https://i.imgur.com/O7kogyb.jpg',
+    'Byredo': 'https://i.imgur.com/m6Xtxel.jpg',
+    'Frederic Malle': 'https://i.imgur.com/bLr2Pmt.jpg',
+    'Escentric Molecules': 'https://i.imgur.com/zCLm56p.jpg',
+    'Viktor&Rolf': 'https://i.imgur.com/bfbELAI.jpg',
+    'Carolina Herrera': 'https://i.imgur.com/n4tyvnt.jpg'
+  };
+
+  const getOptimizedUrl = (url: string, brandName?: string) => {
+    if (url === brandFallback && brandFallback) {
+      return brandFallback;
     }
     
-    // Check if it's a relative path starting with /lovable-uploads
     if (url.startsWith('/lovable-uploads')) {
       return url;
     }
     
-    // Check if it's a valid URL
+    if ((url.includes('placeholder') || url.endsWith('undefined') || 
+        url.includes('user-uploaded') || !url || url === '/') && brandName) {
+      return brandFallbacks[brandName] || 'https://i.imgur.com/VYcN5jR.jpg';
+    }
+    
+    if (url.includes('i.imgur.com')) {
+      return url;
+    }
+    
     try {
       new URL(url);
       return url;
     } catch (e) {
-      // If not a valid URL, try to use the fallback
-      if (brandFallback) return brandFallback;
+      if (brandName && brandFallbacks[brandName]) {
+        return brandFallbacks[brandName];
+      }
+      
       return placeholder;
     }
   };
 
   useEffect(() => {
-    setImgSrc(getOptimizedUrl(src));
+    const brandName = alt.split(' - ')[0] || undefined;
+    
+    setImgSrc(getOptimizedUrl(src, brandName));
     setLoading(true);
     setError(false);
-  }, [src]);
+  }, [src, alt]);
 
   const handleError = () => {
     setError(true);
     
-    // Try brand fallback first
-    if (brandFallback && imgSrc !== brandFallback) {
-      setImgSrc(getOptimizedUrl(brandFallback));
+    const brandName = alt.split(' - ')[0] || undefined;
+    
+    if (brandName && brandFallbacks[brandName]) {
+      setImgSrc(brandFallbacks[brandName]);
     } 
-    // Then try placeholder
+    else if (brandFallback && imgSrc !== brandFallback) {
+      setImgSrc(brandFallback);
+    } 
     else if (imgSrc !== placeholder && placeholder) {
       setImgSrc(placeholder);
     }
-    // Last resort - use uploaded image
     else {
-      setImgSrc('/lovable-uploads/682b0349-496e-4ebb-b8a6-f92faa47d542.png');
+      setImgSrc('https://i.imgur.com/VYcN5jR.jpg');
     }
   };
 
