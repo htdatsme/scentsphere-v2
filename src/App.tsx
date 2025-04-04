@@ -2,14 +2,34 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { SignedIn, SignedOut } from "@clerk/clerk-react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { SignedIn, SignedOut, useAuth } from "@clerk/clerk-react";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import RecommendationQuiz from "./pages/RecommendationQuiz";
 import Results from "./pages/Results";
 import Profile from "./pages/Profile";
 import Login from "./pages/Login";
+
+// Check if Clerk is available (has publishable key)
+const isClerkAvailable = () => {
+  return !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+};
+
+// Wrapper components to handle authentication state when Clerk is not available
+const MockSignedIn = ({ children }) => {
+  if (!isClerkAvailable()) {
+    return <>{children}</>;
+  }
+  return <SignedIn>{children}</SignedIn>;
+};
+
+const MockSignedOut = ({ children }) => {
+  if (!isClerkAvailable()) {
+    return null; // Always consider the user as signed in when Clerk is unavailable
+  }
+  return <SignedOut>{children}</SignedOut>;
+};
 
 const App = () => (
   <TooltipProvider>
@@ -26,12 +46,12 @@ const App = () => (
           path="/quiz"
           element={
             <>
-              <SignedIn>
+              <MockSignedIn>
                 <RecommendationQuiz />
-              </SignedIn>
-              <SignedOut>
-                <Navigate to="/login" replace />
-              </SignedOut>
+              </MockSignedIn>
+              <MockSignedOut>
+                <Login />
+              </MockSignedOut>
             </>
           }
         />
@@ -39,12 +59,12 @@ const App = () => (
           path="/results"
           element={
             <>
-              <SignedIn>
+              <MockSignedIn>
                 <Results />
-              </SignedIn>
-              <SignedOut>
-                <Navigate to="/login" replace />
-              </SignedOut>
+              </MockSignedIn>
+              <MockSignedOut>
+                <Login />
+              </MockSignedOut>
             </>
           }
         />
@@ -52,12 +72,12 @@ const App = () => (
           path="/profile"
           element={
             <>
-              <SignedIn>
+              <MockSignedIn>
                 <Profile />
-              </SignedIn>
-              <SignedOut>
-                <Navigate to="/login" replace />
-              </SignedOut>
+              </MockSignedIn>
+              <MockSignedOut>
+                <Login />
+              </MockSignedOut>
             </>
           }
         />

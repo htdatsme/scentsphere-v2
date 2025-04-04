@@ -21,17 +21,35 @@ const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 // Create a client
 const queryClient = new QueryClient();
 
+// Log if key is missing for debugging
 if (!PUBLISHABLE_KEY) {
-  console.error("Missing Clerk Publishable Key");
+  console.warn("Missing Clerk Publishable Key - Authentication features will be disabled");
 }
 
-createRoot(document.getElementById("root")!).render(
-  <>
-    <FontStyles />
-    <ClerkProvider publishableKey={PUBLISHABLE_KEY || ''}>
+// Use a wrapper component to conditionally apply ClerkProvider
+const AppWrapper = () => {
+  // If no key available, just render the app without Clerk
+  if (!PUBLISHABLE_KEY) {
+    return (
+      <QueryClientProvider client={queryClient}>
+        <App />
+      </QueryClientProvider>
+    );
+  }
+  
+  // With key, use ClerkProvider
+  return (
+    <ClerkProvider publishableKey={PUBLISHABLE_KEY}>
       <QueryClientProvider client={queryClient}>
         <App />
       </QueryClientProvider>
     </ClerkProvider>
+  );
+};
+
+createRoot(document.getElementById("root")!).render(
+  <>
+    <FontStyles />
+    <AppWrapper />
   </>
 );
