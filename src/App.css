@@ -1,3 +1,4 @@
+
 * {
   box-sizing: border-box;
   margin: 0;
@@ -6,53 +7,166 @@
 
 body {
   font-family: var(--font-open-sans);
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
 }
 
 h1, h2, h3, h4, h5, h6 {
   font-family: var(--font-playfair);
+  letter-spacing: -0.01em;
 }
 
 #root {
   width: 100%;
   min-height: 100vh;
-  max-width: 1280px;
+  max-width: 100%;
   margin: 0 auto;
+  padding: 0;
+  text-align: left;
+}
+
+/* Premium design elements */
+.luxury-container {
+  position: relative;
+  padding: 1.5rem;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  background-color: hsl(var(--card));
+  box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.1), 0 5px 15px -8px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.luxury-container:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.1), 0 5px 15px -5px rgba(0, 0, 0, 0.05);
+}
+
+.text-gradient-gold {
+  background: linear-gradient(to right, hsl(36, 100%, 65%), hsl(36, 50%, 65%));
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.fragrance-card {
+  position: relative;
+  overflow: hidden;
+  border-radius: 0.5rem;
+  background-color: hsl(var(--card));
+  transition: all 0.3s ease;
+}
+
+.fragrance-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.1);
+}
+
+.fragrance-card img {
+  transition: transform 0.5s ease;
+}
+
+.fragrance-card:hover img {
+  transform: scale(1.05);
+}
+
+/* Premium button and UI elements */
+.premium-button {
+  background: linear-gradient(to right, hsl(var(--primary)), hsl(var(--primary)/0.8));
+  color: hsl(var(--primary-foreground));
+  border: none;
+  border-radius: 9999px;
+  padding: 0.75rem 1.5rem;
+  font-weight: 500;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  letter-spacing: 0.01em;
+}
+
+.premium-button:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 7px 14px rgba(0, 0, 0, 0.1), 0 3px 6px rgba(0, 0, 0, 0.08);
+}
+
+/* Luxury page background */
+.luxury-page-bg {
+  position: relative;
+}
+
+.luxury-page-bg::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-image: radial-gradient(circle at 80% 10%, hsl(var(--accent)/0.15) 0%, transparent 60%);
+  pointer-events: none;
+  z-index: -1;
+}
+
+/* Refined container effect for premium look */
+.refined-container {
+  border: 1px solid hsl(var(--border));
+  background-color: hsl(var(--card));
+  border-radius: 1rem;
   padding: 2rem;
-  text-align: center;
+  box-shadow: 0 10px 30px -5px rgba(0, 0, 0, 0.1);
+  position: relative;
+  overflow: hidden;
 }
 
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
+.refined-container::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 4px;
+  background: linear-gradient(to right, hsl(var(--primary)), hsl(var(--accent)));
 }
 
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
+/* Luxury card effect */
+.luxury-card {
+  border-radius: 1rem;
+  overflow: hidden;
+  background-color: hsl(var(--card));
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.05), 0 5px 10px -5px rgba(0, 0, 0, 0.03);
+  transition: transform 0.3s ease, box-shadow 0.3s ease;
+}
+
+.luxury-card:hover {
+  transform: translateY(-5px);
+  box-shadow: 0 15px 35px -5px rgba(0, 0, 0, 0.1), 0 5px 15px -5px rgba(0, 0, 0, 0.05);
+}
+
+/* Shimmer effect for loading states */
+.shimmer-effect {
+  position: relative;
+  overflow: hidden;
+  background-color: hsl(var(--muted));
+  border-radius: 0.5rem;
+}
+
+.shimmer-effect::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  transform: translateX(-100%);
+  background-image: linear-gradient(
+    90deg,
+    rgba(255, 255, 255, 0) 0,
+    rgba(255, 255, 255, 0.2) 20%,
+    rgba(255, 255, 255, 0.5) 60%,
+    rgba(255, 255, 255, 0)
+  );
+  animation: shimmer 2s infinite;
+}
+
+@keyframes shimmer {
+  100% {
+    transform: translateX(100%);
   }
-  to {
-    transform: rotate(360deg);
-  }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
-  }
-}
-
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
 }

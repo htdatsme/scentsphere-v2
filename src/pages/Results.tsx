@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useRecommendationStore } from "@/lib/store";
@@ -6,13 +7,14 @@ import Footer from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import OptimizedImage from "@/components/ui/optimized-image";
 import { fragrances } from "@/lib/data/fragranceData";
 import { generateScentProfile, generateRecommendations } from "@/lib/ml/scentProfileGenerator";
 import { scentModel } from "@/lib/ml/tensorflowModel";
 import { ScentProfile, UserQuizAnswers } from "@/types/quiz";
 import ScentProfileChart from "@/components/ScentProfileChart";
 import { toast } from "sonner";
-import { Heart, ThumbsUp, ThumbsDown } from "lucide-react";
+import { Heart, ThumbsUp, ThumbsDown, Star, StarHalf, Info } from "lucide-react";
 
 const Results = () => {
   const { 
@@ -27,6 +29,7 @@ const Results = () => {
   const [scentProfile, setScentProfile] = useState<ScentProfile | null>(null);
   const [likedNotes, setLikedNotes] = useState<string[]>([]);
   const [dislikedNotes, setDislikedNotes] = useState<string[]>([]);
+  const [favorites, setFavorites] = useState<number[]>([]);
 
   useEffect(() => {
     // Load recommendations
@@ -50,6 +53,12 @@ const Results = () => {
         const recommendedFragrances = await generateRecommendations(profile);
         setRecommendations(recommendedFragrances);
         
+        // Load saved favorites
+        const savedFavorites = localStorage.getItem('favoriteFragrances');
+        if (savedFavorites) {
+          setFavorites(JSON.parse(savedFavorites));
+        }
+        
         // Feedback success
         toast.success("Your personalized recommendations are ready!");
       } catch (error) {
@@ -57,7 +66,7 @@ const Results = () => {
         toast.error("There was an issue generating your recommendations");
         
         // Fallback to sample data
-        setRecommendations(fragrances);
+        setRecommendations(fragrances.slice(0, 6));
       } finally {
         setLoading(false);
       }
@@ -99,16 +108,47 @@ const Results = () => {
     }
   };
 
+  const toggleFavorite = (id: number) => {
+    let newFavorites: number[];
+    
+    if (favorites.includes(id)) {
+      newFavorites = favorites.filter(fav => fav !== id);
+      toast.success("Removed from favorites");
+    } else {
+      newFavorites = [...favorites, id];
+      toast.success("Added to favorites");
+    }
+    
+    setFavorites(newFavorites);
+    localStorage.setItem('favoriteFragrances', JSON.stringify(newFavorites));
+  };
+
+  // Display star rating
+  const renderRating = (rating: number) => {
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 >= 0.5;
+    
+    return (
+      <div className="flex items-center">
+        {Array.from({ length: fullStars }).map((_, i) => (
+          <Star key={`star-${i}`} className="w-4 h-4 fill-yellow-500 text-yellow-500" />
+        ))}
+        {hasHalfStar && <StarHalf className="w-4 h-4 fill-yellow-500 text-yellow-500" />}
+        <span className="ml-1 text-sm">{rating.toFixed(1)}</span>
+      </div>
+    );
+  };
+
   if (!userPreferences) {
     return (
       <div className="flex flex-col min-h-screen">
         <Header />
-        <main className="flex-1 container py-10">
-          <div className="max-w-3xl mx-auto text-center">
+        <main className="flex-1 container py-10 premium-bg-pattern">
+          <div className="max-w-3xl mx-auto text-center glass p-8 rounded-xl">
             <h1 className="text-3xl font-serif font-bold mb-4">No Preferences Found</h1>
-            <p className="mb-6">Please complete the quiz to get your personalized recommendations.</p>
+            <p className="mb-6 text-muted-foreground">Please complete the quiz to get your personalized recommendations.</p>
             <Link to="/quiz">
-              <Button>Take the Quiz</Button>
+              <Button className="premium-button">Take the Quiz</Button>
             </Link>
           </div>
         </main>
@@ -118,24 +158,26 @@ const Results = () => {
   }
 
   return (
-    <div className="flex flex-col min-h-screen">
+    <div className="flex flex-col min-h-screen luxury-bg">
       <Header />
       <main className="flex-1 container py-10">
-        <div className="max-w-4xl mx-auto">
-          <div className="text-center mb-6">
-            <h1 className="text-3xl font-serif font-bold mb-3">Your Fragrance Recommendations</h1>
-            <p className="text-muted-foreground">Based on your unique preferences, we've selected these fragrances just for you.</p>
+        <div className="max-w-5xl mx-auto">
+          <div className="text-center mb-10">
+            <h1 className="text-4xl font-serif font-bold mb-3 text-gradient">Your Fragrance Recommendations</h1>
+            <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
+              Based on your unique preferences, we've selected these premium fragrances just for you.
+            </p>
           </div>
 
           {/* Scent profile visualization */}
           {scentProfile && (
-            <Card className="mb-8">
+            <Card className="mb-10 premium-card backdrop-blur-sm bg-background/80">
               <CardHeader>
-                <CardTitle className="font-serif">Your Scent Profile</CardTitle>
+                <CardTitle className="font-serif text-2xl">Your Scent Profile</CardTitle>
                 <CardDescription>This chart shows your affinity to different fragrance notes</CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="flex flex-col md:flex-row gap-6 items-center">
+                <div className="flex flex-col md:flex-row gap-8 items-center">
                   <div className="w-full md:w-1/2">
                     <ScentProfileChart profile={scentProfile} />
                   </div>
@@ -168,7 +210,7 @@ const Results = () => {
                                 </Button>
                               </div>
                             </div>
-                            <div className="w-1/2 bg-muted rounded-full h-2">
+                            <div className="w-1/2 bg-muted rounded-full h-2 overflow-hidden">
                               <div 
                                 className="bg-primary h-full rounded-full" 
                                 style={{ width: `${value * 100}%` }} 
@@ -177,7 +219,7 @@ const Results = () => {
                           </div>
                         ))}
                     </div>
-                    <div className="mt-4 text-sm text-muted-foreground">
+                    <div className="mt-4 text-sm text-muted-foreground bg-muted/30 p-3 rounded-lg border border-border/30">
                       <p>Use the thumbs up/down buttons to refine your preferences for future recommendations.</p>
                     </div>
                   </div>
@@ -187,7 +229,7 @@ const Results = () => {
           )}
           
           <Tabs defaultValue="recommended" className="mb-8">
-            <TabsList className="grid grid-cols-3">
+            <TabsList className="grid w-full max-w-md mx-auto grid-cols-3 mb-6">
               <TabsTrigger value="recommended" onClick={() => setActiveTab("recommended")}>Recommended</TabsTrigger>
               <TabsTrigger value="best-match" onClick={() => setActiveTab("best-match")}>Best Match</TabsTrigger>
               <TabsTrigger value="popular" onClick={() => setActiveTab("popular")}>Popular</TabsTrigger>
@@ -200,34 +242,46 @@ const Results = () => {
                   <p className="mt-4 text-muted-foreground">Finding your perfect scent...</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                   {recommendations.map((fragrance) => (
-                    <Card key={fragrance.id} className="overflow-hidden group">
+                    <Card key={fragrance.id} className="scent-card overflow-hidden product-card-hover">
                       <div className="aspect-square overflow-hidden relative">
-                        <img 
+                        <OptimizedImage 
                           src={fragrance.imageUrl} 
-                          alt={fragrance.name} 
+                          alt={fragrance.name}
                           className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                          width={400}
+                          height={400}
                         />
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="absolute top-2 right-2 bg-background/50 backdrop-blur-sm hover:bg-background/80"
+                          className={`absolute top-2 right-2 bg-background/80 backdrop-blur-sm hover:bg-background/90 z-10 ${
+                            favorites.includes(fragrance.id) ? 'text-primary' : ''
+                          }`}
+                          onClick={() => toggleFavorite(fragrance.id)}
                         >
-                          <Heart className="h-4 w-4" />
+                          <Heart className={`h-5 w-5 ${favorites.includes(fragrance.id) ? 'fill-primary' : ''}`} />
                         </Button>
                       </div>
                       <CardHeader>
-                        <CardTitle className="font-serif">{fragrance.name}</CardTitle>
-                        <CardDescription>{fragrance.brand}</CardDescription>
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <CardTitle className="font-serif">{fragrance.name}</CardTitle>
+                            <CardDescription>{fragrance.brand}</CardDescription>
+                          </div>
+                          <div className="flex items-center">
+                            {renderRating(fragrance.rating)}
+                          </div>
+                        </div>
                       </CardHeader>
                       <CardContent>
-                        <p className="text-sm mb-4">{fragrance.description}</p>
+                        <p className="text-sm mb-4 line-clamp-2">{fragrance.description}</p>
                         <div className="flex flex-wrap gap-2 mb-4">
                           {fragrance.notes.slice(0, 3).map((note) => (
                             <span 
                               key={note.name} 
-                              className="text-xs bg-secondary px-2 py-1 rounded-full"
+                              className="text-xs bg-secondary/70 text-secondary-foreground px-2 py-1 rounded-full"
                             >
                               {note.name}
                             </span>
@@ -239,15 +293,17 @@ const Results = () => {
                           )}
                         </div>
                         <div className="flex justify-between items-center">
-                          <span className="font-medium">${fragrance.price}</span>
-                          <div className="flex items-center">
-                            <span className="text-yellow-500 mr-1">★</span>
-                            <span>{fragrance.rating}</span>
+                          <span className="font-medium text-lg">${fragrance.price}</span>
+                          <div className="flex items-center gap-2">
+                            <span className="text-xs bg-muted px-2 py-1 rounded-full">{fragrance.gender}</span>
+                            <span className="text-xs bg-muted px-2 py-1 rounded-full">{fragrance.intensity}/10</span>
                           </div>
                         </div>
                       </CardContent>
                       <CardFooter>
-                        <Button variant="outline" className="w-full">Learn More</Button>
+                        <Button variant="default" className="w-full premium-button">
+                          <Info className="mr-2 h-4 w-4" /> Learn More
+                        </Button>
                       </CardFooter>
                     </Card>
                   ))}
@@ -262,49 +318,75 @@ const Results = () => {
                   <p className="mt-4 text-muted-foreground">Finding your best matches...</p>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                   {recommendations.slice(0, 2).map((fragrance) => (
-                    <Card key={fragrance.id} className="overflow-hidden group">
+                    <Card key={fragrance.id} className="scent-card overflow-hidden product-card-hover">
                       <div className="aspect-square overflow-hidden relative">
-                        <img 
+                        <OptimizedImage 
                           src={fragrance.imageUrl} 
-                          alt={fragrance.name} 
+                          alt={fragrance.name}
                           className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                          width={500}
+                          height={500}
                         />
+                        <div className="absolute top-2 left-2 bg-primary text-primary-foreground px-3 py-1 rounded-full text-xs font-medium">
+                          Top Match
+                        </div>
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="absolute top-2 right-2 bg-background/50 backdrop-blur-sm hover:bg-background/80"
+                          className={`absolute top-2 right-2 bg-background/80 backdrop-blur-sm hover:bg-background/90 z-10 ${
+                            favorites.includes(fragrance.id) ? 'text-primary' : ''
+                          }`}
+                          onClick={() => toggleFavorite(fragrance.id)}
                         >
-                          <Heart className="h-4 w-4" />
+                          <Heart className={`h-5 w-5 ${favorites.includes(fragrance.id) ? 'fill-primary' : ''}`} />
                         </Button>
                       </div>
                       <CardHeader>
-                        <CardTitle className="font-serif">{fragrance.name}</CardTitle>
-                        <CardDescription>{fragrance.brand}</CardDescription>
+                        <div className="flex justify-between items-start">
+                          <div>
+                            <CardTitle className="font-serif">{fragrance.name}</CardTitle>
+                            <CardDescription>{fragrance.brand}</CardDescription>
+                          </div>
+                          <div className="flex items-center">
+                            {renderRating(fragrance.rating)}
+                          </div>
+                        </div>
                       </CardHeader>
                       <CardContent>
                         <p className="text-sm mb-4">{fragrance.description}</p>
                         <div className="flex flex-wrap gap-2 mb-4">
-                          {fragrance.notes.slice(0, 3).map((note) => (
+                          {fragrance.notes.slice(0, 5).map((note) => (
                             <span 
                               key={note.name} 
-                              className="text-xs bg-secondary px-2 py-1 rounded-full"
+                              className="text-xs bg-secondary/70 text-secondary-foreground px-2 py-1 rounded-full"
                             >
                               {note.name}
                             </span>
                           ))}
                         </div>
-                        <div className="flex justify-between items-center">
-                          <span className="font-medium">${fragrance.price}</span>
-                          <div className="flex items-center">
-                            <span className="text-yellow-500 mr-1">★</span>
-                            <span>{fragrance.rating}</span>
+                        <div className="flex flex-col gap-2">
+                          <div className="flex justify-between items-center">
+                            <span className="font-medium text-lg">${fragrance.price}</span>
+                            <div className="flex items-center gap-2">
+                              <span className="text-xs bg-muted px-2 py-1 rounded-full">{fragrance.gender}</span>
+                              <span className="text-xs bg-muted px-2 py-1 rounded-full">{fragrance.intensity}/10</span>
+                            </div>
+                          </div>
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {fragrance.categories.map(category => (
+                              <span key={category} className="text-xs text-muted-foreground">
+                                {category}{' '}
+                              </span>
+                            ))}
                           </div>
                         </div>
                       </CardContent>
                       <CardFooter>
-                        <Button variant="outline" className="w-full">Learn More</Button>
+                        <Button variant="default" className="w-full premium-button">
+                          <Info className="mr-2 h-4 w-4" /> Learn More
+                        </Button>
                       </CardFooter>
                     </Card>
                   ))}
@@ -320,14 +402,21 @@ const Results = () => {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                  {[...recommendations].sort((a, b) => b.rating - a.rating).map((fragrance) => (
-                    <Card key={fragrance.id} className="overflow-hidden group">
+                  {[...recommendations].sort((a, b) => b.rating - a.rating).slice(0, 6).map((fragrance, index) => (
+                    <Card key={fragrance.id} className="scent-card overflow-hidden product-card-hover">
                       <div className="aspect-square overflow-hidden">
-                        <img 
+                        <OptimizedImage 
                           src={fragrance.imageUrl} 
-                          alt={fragrance.name} 
+                          alt={fragrance.name}
                           className="w-full h-full object-cover transition-transform group-hover:scale-105"
+                          width={300}
+                          height={300}
                         />
+                        {index < 3 && (
+                          <div className="absolute top-2 left-2 bg-accent text-accent-foreground px-3 py-1 rounded-full text-xs font-medium">
+                            #{index + 1} Popular
+                          </div>
+                        )}
                       </div>
                       <CardHeader>
                         <CardTitle className="font-serif">{fragrance.name}</CardTitle>
@@ -337,13 +426,12 @@ const Results = () => {
                         <div className="flex justify-between items-center">
                           <span className="font-medium">${fragrance.price}</span>
                           <div className="flex items-center">
-                            <span className="text-yellow-500 mr-1">★</span>
-                            <span>{fragrance.rating}</span>
+                            {renderRating(fragrance.rating)}
                           </div>
                         </div>
                       </CardContent>
                       <CardFooter>
-                        <Button variant="outline" className="w-full">Learn More</Button>
+                        <Button variant="outline" className="w-full premium-button">Learn More</Button>
                       </CardFooter>
                     </Card>
                   ))}
@@ -352,11 +440,11 @@ const Results = () => {
             </TabsContent>
           </Tabs>
 
-          <div className="mt-12 text-center">
+          <div className="mt-16 text-center glass p-8 rounded-xl">
             <h2 className="text-2xl font-serif font-bold mb-4">Want to Try Again?</h2>
             <p className="mb-6 text-muted-foreground">Not seeing what you like? Take the quiz again to refine your recommendations.</p>
             <Link to="/quiz">
-              <Button variant="outline">Retake Quiz</Button>
+              <Button variant="outline" className="premium-button">Retake Quiz</Button>
             </Link>
           </div>
         </div>

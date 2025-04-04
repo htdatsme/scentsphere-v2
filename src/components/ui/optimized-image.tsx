@@ -26,22 +26,34 @@ export const OptimizedImage = ({
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
 
-  // Generate optimized Cloudinary URL if it's a Cloudinary image
+  // Generate optimized URL if it's a direct image URL
   const getOptimizedUrl = (url: string) => {
-    if (url.includes('cloudinary.com')) {
-      // Extract the base URL and transformation parts
-      const urlParts = url.split('/upload/');
-      if (urlParts.length === 2) {
-        // Add auto format and quality transformations
-        return `${urlParts[0]}/upload/c_scale,w_${width},q_auto,f_auto/${urlParts[1]}`;
-      }
+    // Fix broken image URLs that might be using incorrect placeholders
+    if (url.includes('unsplash.com') && (url.includes('placeholder') || url.endsWith('undefined'))) {
+      return `/lovable-uploads/682b0349-496e-4ebb-b8a6-f92faa47d542.png`;
     }
-    return url;
+    
+    // Check if it's a relative path starting with /lovable-uploads
+    if (url.startsWith('/lovable-uploads')) {
+      return url;
+    }
+    
+    // Check if it's a valid URL
+    try {
+      new URL(url);
+      return url;
+    } catch (e) {
+      // If not a valid URL, try to use the fallback
+      if (brandFallback) return brandFallback;
+      return placeholder;
+    }
   };
 
   useEffect(() => {
     setImgSrc(getOptimizedUrl(src));
-  }, [src, width]);
+    setLoading(true);
+    setError(false);
+  }, [src]);
 
   const handleError = () => {
     setError(true);
@@ -50,16 +62,20 @@ export const OptimizedImage = ({
     if (brandFallback && imgSrc !== brandFallback) {
       setImgSrc(getOptimizedUrl(brandFallback));
     } 
-    // Then placeholder
-    else if (imgSrc !== placeholder) {
+    // Then try placeholder
+    else if (imgSrc !== placeholder && placeholder) {
       setImgSrc(placeholder);
+    }
+    // Last resort - use uploaded image
+    else {
+      setImgSrc('/lovable-uploads/682b0349-496e-4ebb-b8a6-f92faa47d542.png');
     }
   };
 
   return (
     <div className={`relative overflow-hidden ${className}`} style={{ width, height }}>
       {loading && (
-        <div className="absolute inset-0 flex items-center justify-center bg-muted animate-pulse">
+        <div className="absolute inset-0 flex items-center justify-center bg-muted/30 backdrop-blur-sm animate-pulse">
           <span className="sr-only">Loading...</span>
         </div>
       )}
