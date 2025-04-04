@@ -13,6 +13,16 @@ import '@fontsource/playfair-display/400.css';
 import '@fontsource/playfair-display/600.css';
 import '@fontsource/playfair-display/700.css';
 
+// Define font variables for Tailwind
+import { createGlobalStyle } from 'styled-components';
+
+const FontStyles = createGlobalStyle`
+  :root {
+    --font-open-sans: 'Open Sans', sans-serif;
+    --font-playfair: 'Playfair Display', serif;
+  }
+`;
+
 // Ensure you have the environment variable
 const PUBLISHABLE_KEY = import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
@@ -24,9 +34,12 @@ if (!PUBLISHABLE_KEY) {
 }
 
 createRoot(document.getElementById("root")!).render(
-  <ClerkProvider publishableKey={PUBLISHABLE_KEY || 'pk_test_placeholder-key-for-dev'}>
-    <QueryClientProvider client={queryClient}>
-      <App />
-    </QueryClientProvider>
-  </ClerkProvider>
+  <>
+    <FontStyles />
+    <ClerkProvider publishableKey={PUBLISHABLE_KEY || 'pk_test_placeholder-key-for-dev'}>
+      <QueryClientProvider client={queryClient}>
+        <App />
+      </QueryClientProvider>
+    </ClerkProvider>
+  </>
 );
