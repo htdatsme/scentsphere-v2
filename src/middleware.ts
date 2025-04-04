@@ -2,8 +2,6 @@
 // Create a placeholder middleware file that works with Vite instead of Next.js
 // This replaces the Next.js specific middleware with something that works in our environment
 
-import { clerkClient } from '@clerk/clerk-react';
-
 // Simple middleware implementation compatible with our Vite setup
 export const middleware = () => {
   console.log('Middleware running in non-Next.js environment');
@@ -35,4 +33,3 @@ export const rateLimiter = {
 export const config = {
   matcher: ['/((?!.*\\..*|_next).*)', '/', '/(api|trpc)(.*)'],
 };
-

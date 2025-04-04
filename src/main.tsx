@@ -28,7 +28,7 @@ if (!PUBLISHABLE_KEY) {
 createRoot(document.getElementById("root")!).render(
   <>
     <FontStyles />
-    <ClerkProvider publishableKey={PUBLISHABLE_KEY || 'pk_test_placeholder-key-for-dev'}>
+    <ClerkProvider publishableKey={PUBLISHABLE_KEY || ''}>
       <QueryClientProvider client={queryClient}>
         <App />
       </QueryClientProvider>
