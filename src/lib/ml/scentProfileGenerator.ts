@@ -2,6 +2,8 @@
 import { UserQuizAnswers, ScentProfile, QuizFactorId } from "@/types/quiz";
 import { quizFactors } from "../data/quizFactors";
 import { fragrances } from "../data/fragranceData";
+import { enhancedRecommendationEngine } from "./enhancedRecommendationEngine";
+import { scentModel } from "./tensorflowModel";
 
 // Get Toronto weather data
 const getTorontoWeather = async (): Promise<{
@@ -61,6 +63,21 @@ export const generateScentProfile = async (
       occasions: {},
     },
   };
+  
+  // Try to get TF.js predictions first
+  try {
+    const noteAffinities = await scentModel.predict(answers);
+    
+    // Use these predictions as a starting point for our note affinities
+    for (const note in noteAffinities) {
+      profile.notes[note] = noteAffinities[note];
+    }
+    
+    console.log("Used TensorFlow.js model for note affinities");
+  } catch (error) {
+    console.error("Error using TensorFlow.js model:", error);
+    // Continue with traditional approach if ML fails
+  }
   
   // Process each answer to build the note affinities
   for (const factor of quizFactors) {
@@ -162,130 +179,6 @@ const normalizeNotes = (profile: ScentProfile) => {
 export const generateRecommendations = async (
   profile: ScentProfile
 ): Promise<typeof fragrances> => {
-  // Extract all unique notes from all fragrances for better matching
-  const allNotes = new Set<string>();
-  fragrances.forEach(fragrance => {
-    fragrance.notes.forEach(note => {
-      allNotes.add(note.name.toLowerCase());
-    });
-  });
-
-  // Calculate content-based filtering scores (60%)
-  const contentScores = fragrances.map(fragrance => {
-    let score = 0;
-    
-    // Match notes
-    fragrance.notes.forEach(noteObj => {
-      const noteName = noteObj.name.toLowerCase();
-      
-      // Look for matching notes in the profile
-      for (const profileNote in profile.notes) {
-        // Check for exact match or partial match
-        const profileNoteLower = profileNote.toLowerCase();
-        if (noteName === profileNoteLower || 
-            noteName.includes(profileNoteLower) || 
-            profileNoteLower.includes(noteName)) {
-          // Weight depends on note category
-          let categoryMultiplier = 1;
-          if (noteObj.category === 'top') categoryMultiplier = 1.2;
-          if (noteObj.category === 'base') categoryMultiplier = 1.1;
-          
-          score += profile.notes[profileNote] * 10 * categoryMultiplier;
-        }
-      }
-    });
-    
-    // Match gender preference if available
-    if (profile.factors.gender) {
-      if (profile.factors.gender === fragrance.gender || 
-          fragrance.gender === 'unisex') {
-        score += 5;
-      }
-    }
-    
-    // Match season preference
-    const matchingSeason = fragrance.seasons.some(season => 
-      profile.preferences.seasonality[season.toLowerCase() as keyof typeof profile.preferences.seasonality] > 0.5
-    );
-    
-    if (matchingSeason) {
-      score += 3;
-    }
-    
-    // Match intensity
-    const intensityDiff = Math.abs(fragrance.intensity - profile.preferences.intensity);
-    score -= intensityDiff; // Reduce score based on intensity mismatch
-    
-    // Add a slight randomization factor (5%) to avoid identical results across sessions
-    const randomFactor = 0.95 + (Math.random() * 0.1); // 0.95 to 1.05
-    score *= randomFactor;
-    
-    return { fragrance, contentScore: score };
-  });
-
-  // Simulate collaborative filtering (25%)
-  // In a real app, this would use real user data
-  const collaborativeScores = fragrances.map(fragrance => {
-    // Placeholder collaborative score based on rating (simulating user data)
-    const collab = fragrance.rating * 2;
-    
-    // Add some preference for newer fragrances if launch year is available
-    const currentYear = new Date().getFullYear();
-    let newnessFactor = 0;
-    if (fragrance.launchYear) {
-      const age = currentYear - fragrance.launchYear;
-      newnessFactor = Math.max(0, (10 - age) / 10); // Higher score for newer fragrances
-    }
-    
-    return { fragrance, collabScore: collab + newnessFactor };
-  });
-
-  // Apply Toronto weather influence (15%)
-  const weather = await getTorontoWeather();
-  const weatherScores = fragrances.map(fragrance => {
-    let score = 0;
-    
-    // For hot weather, prefer fresh/light scents
-    if (weather.temperature > 20) {
-      if (fragrance.categories.some(c => 
-        ['Fresh', 'Citrus', 'Aquatic', 'Marine'].includes(c))) {
-        score += 3;
-      }
-    }
-    // For cold weather, prefer warm/heavy scents
-    else if (weather.temperature < 10) {
-      if (fragrance.categories.some(c => 
-        ['Oriental', 'Woody', 'Spicy', 'Gourmand', 'Amber'].includes(c))) {
-        score += 3;
-      }
-    }
-    
-    // For high humidity, prefer lighter scents
-    if (weather.humidity > 65) {
-      if (fragrance.intensity < 6) {
-        score += 2;
-      }
-    }
-    
-    return { fragrance, weatherScore: score };
-  });
-
-  // Combine all scores with proper weighting
-  const combinedScores = fragrances.map((fragrance, i) => {
-    const content = contentScores[i].contentScore * 0.6; // 60%
-    const collab = collaborativeScores[i].collabScore * 0.25; // 25%
-    const weather = weatherScores[i].weatherScore * 0.15; // 15%
-    
-    const totalScore = content + collab + weather;
-    
-    return {
-      ...fragrance,
-      score: totalScore
-    };
-  });
-
-  // Sort by score and return top results
-  return combinedScores
-    .sort((a, b) => b.score - a.score)
-    .map(({ score, ...fragrance }) => fragrance);
+  // Use the enhanced recommendation engine for better results
+  return await enhancedRecommendationEngine.generateRecommendations(profile);
 };

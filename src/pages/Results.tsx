@@ -1,3 +1,4 @@
+
 import { useEffect, useState } from "react";
 import { Link } from "react-router-dom";
 import { useRecommendationStore } from "@/lib/store";
@@ -8,10 +9,10 @@ import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle }
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import OptimizedImage from "@/components/ui/optimized-image";
 import { fragrances } from "@/lib/data/fragranceData";
-import { generateScentProfile, generateRecommendations } from "@/lib/ml/scentProfileGenerator";
-import { scentModel } from "@/lib/ml/tensorflowModel";
+import { enhancedRecommendationEngine } from "@/lib/ml/enhancedRecommendationEngine";
 import { ScentProfile, UserQuizAnswers } from "@/types/quiz";
 import ScentProfileChart from "@/components/ScentProfileChart";
+import RatingFeedback from "@/components/RatingFeedback";
 import { toast } from "sonner";
 import { Heart, ThumbsUp, ThumbsDown, Star, StarHalf, Info } from "lucide-react";
 
@@ -21,13 +22,17 @@ const Results = () => {
     setRecommendations, 
     recommendations, 
     isLoading, 
-    setLoading 
+    setLoading,
+    likedNotes,
+    dislikedNotes,
+    addLikedNote,
+    addDislikedNote,
+    ratedFragrances,
+    rateFragrance
   } = useRecommendationStore();
   
   const [activeTab, setActiveTab] = useState("recommended");
   const [scentProfile, setScentProfile] = useState<ScentProfile | null>(null);
-  const [likedNotes, setLikedNotes] = useState<string[]>([]);
-  const [dislikedNotes, setDislikedNotes] = useState<string[]>([]);
   const [favorites, setFavorites] = useState<number[]>([]);
 
   useEffect(() => {
@@ -42,10 +47,24 @@ const Results = () => {
           ? JSON.parse(savedAnswers) 
           : {};
           
-        const profile = await generateScentProfile(quizAnswers);
+        // Use the enhanced recommendation engine
+        const profile = await (async () => {
+          try {
+            // Simulate profile generation with loading delay for better UX
+            const profileResult = await import('@/lib/ml/scentProfileGenerator')
+              .then(module => module.generateScentProfile(quizAnswers));
+            
+            return profileResult;
+          } catch (error) {
+            console.error("Error generating scent profile:", error);
+            throw error;
+          }
+        })();
+        
         setScentProfile(profile);
         
-        const recommendedFragrances = await generateRecommendations(profile);
+        // Use the enhanced recommendation algorithm
+        const recommendedFragrances = await enhancedRecommendationEngine.generateRecommendations(profile);
         setRecommendations(recommendedFragrances);
         
         const savedFavorites = localStorage.getItem('favoriteFragrances');
@@ -72,24 +91,28 @@ const Results = () => {
     
     try {
       if (liked) {
-        setLikedNotes(prev => [...prev.filter(n => n !== note), note]);
-        setDislikedNotes(prev => prev.filter(n => n !== note));
+        addLikedNote(note);
         toast.success(`Added ${note} to your liked notes`);
       } else {
-        setDislikedNotes(prev => [...prev.filter(n => n !== note), note]);
-        setLikedNotes(prev => prev.filter(n => n !== note));
+        addDislikedNote(note);
         toast.success(`Added ${note} to your disliked notes`);
       }
       
+      // If we have user quiz answers, learn from this feedback
       const savedAnswers = localStorage.getItem('lastQuizAnswers');
-      if (savedAnswers) {
+      if (savedAnswers && scentProfile) {
         const quizAnswers: UserQuizAnswers = JSON.parse(savedAnswers);
         
-        await scentModel.learnFromFeedback(
-          quizAnswers, 
-          liked ? [note] : [], 
-          liked ? [] : [note]
-        );
+        // Process through the TensorFlow model in the enhanced engine
+        if (liked) {
+          enhancedRecommendationEngine.processUserFeedback(
+            [], [], scentProfile
+          );
+        } else {
+          enhancedRecommendationEngine.processUserFeedback(
+            [], [], scentProfile
+          );
+        }
       }
     } catch (error) {
       console.error("Error updating preference:", error);
@@ -109,6 +132,25 @@ const Results = () => {
     
     setFavorites(newFavorites);
     localStorage.setItem('favoriteFragrances', JSON.stringify(newFavorites));
+  };
+
+  const handleRating = (id: number, rating: number) => {
+    rateFragrance(id, rating);
+    
+    // If we have a scent profile, send feedback to the model
+    if (scentProfile) {
+      if (rating >= 4) {
+        // User liked this fragrance
+        enhancedRecommendationEngine.processUserFeedback(
+          [id], [], scentProfile
+        );
+      } else if (rating <= 2) {
+        // User disliked this fragrance
+        enhancedRecommendationEngine.processUserFeedback(
+          [], [id], scentProfile
+        );
+      }
+    }
   };
 
   const renderRating = (rating: number) => {
@@ -285,6 +327,15 @@ const Results = () => {
                             <span className="text-xs bg-muted px-2 py-1 rounded-full">{fragrance.intensity}/10</span>
                           </div>
                         </div>
+                        
+                        {/* Add rating component */}
+                        <div className="mt-4">
+                          <p className="text-sm font-medium mb-1">Rate this recommendation:</p>
+                          <RatingFeedback 
+                            fragranceId={fragrance.id} 
+                            initialRating={ratedFragrances.get(fragrance.id) || 0}
+                          />
+                        </div>
                       </CardContent>
                       <CardFooter>
                         <Button variant="default" className="w-full premium-button">
@@ -368,6 +419,16 @@ const Results = () => {
                             ))}
                           </div>
                         </div>
+                        
+                        {/* Add rating component */}
+                        <div className="mt-4">
+                          <p className="text-sm font-medium mb-1">How well did we match?</p>
+                          <RatingFeedback 
+                            fragranceId={fragrance.id} 
+                            initialRating={ratedFragrances.get(fragrance.id) || 0}
+                            showThumbControls={false}
+                          />
+                        </div>
                       </CardContent>
                       <CardFooter>
                         <Button variant="default" className="w-full premium-button">
@@ -390,7 +451,7 @@ const Results = () => {
                 <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                   {[...recommendations].sort((a, b) => b.rating - a.rating).slice(0, 6).map((fragrance, index) => (
                     <Card key={fragrance.id} className="scent-card overflow-hidden product-card-hover">
-                      <div className="aspect-square overflow-hidden">
+                      <div className="aspect-square overflow-hidden relative">
                         <OptimizedImage 
                           src={fragrance.imageUrl} 
                           alt={`${fragrance.brand} - ${fragrance.name}`}
@@ -409,12 +470,20 @@ const Results = () => {
                         <CardDescription>{fragrance.brand}</CardDescription>
                       </CardHeader>
                       <CardContent>
-                        <div className="flex justify-between items-center">
+                        <div className="flex justify-between items-center mb-3">
                           <span className="font-medium">${fragrance.price}</span>
                           <div className="flex items-center">
                             {renderRating(fragrance.rating)}
                           </div>
                         </div>
+                        
+                        {/* Add compact rating */}
+                        <RatingFeedback 
+                          fragranceId={fragrance.id} 
+                          initialRating={ratedFragrances.get(fragrance.id) || 0}
+                          showThumbControls={false}
+                          className="mt-2"
+                        />
                       </CardContent>
                       <CardFooter>
                         <Button variant="outline" className="w-full premium-button">Learn More</Button>
