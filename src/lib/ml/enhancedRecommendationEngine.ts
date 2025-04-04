@@ -14,7 +14,7 @@ const WEIGHTS = {
 
 // Enhanced recommendation engine using TensorFlow.js
 export class EnhancedRecommendationEngine {
-  private model: tf.LayersModel | null = null;
+  private model: tf.Sequential | null = null;
   private isModelReady: boolean = false;
   
   constructor() {
