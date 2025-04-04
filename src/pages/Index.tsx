@@ -3,7 +3,21 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
-import { SignedIn, SignedOut } from "@clerk/clerk-react";
+
+// Check if Clerk is available
+const isClerkAvailable = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+
+// Mock components for when Clerk is not available
+const MockSignedIn = ({ children }) => {
+  return <>{children}</>;
+};
+
+const MockSignedOut = ({ children }) => {
+  if (!isClerkAvailable) {
+    return null;
+  }
+  return children;
+};
 
 const Index = () => {
   return (
@@ -20,16 +34,24 @@ const Index = () => {
               Personalized recommendations based on your preferences, lifestyle, and personality.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 animate-fade-in">
-              <SignedIn>
+              {isClerkAvailable ? (
+                <>
+                  <MockSignedIn>
+                    <Link to="/quiz">
+                      <Button size="lg" className="font-medium">Start Your Quiz</Button>
+                    </Link>
+                  </MockSignedIn>
+                  <MockSignedOut>
+                    <Link to="/login">
+                      <Button size="lg" className="font-medium">Sign In to Begin</Button>
+                    </Link>
+                  </MockSignedOut>
+                </>
+              ) : (
                 <Link to="/quiz">
                   <Button size="lg" className="font-medium">Start Your Quiz</Button>
                 </Link>
-              </SignedIn>
-              <SignedOut>
-                <Link to="/login">
-                  <Button size="lg" className="font-medium">Sign In to Begin</Button>
-                </Link>
-              </SignedOut>
+              )}
             </div>
           </div>
         </section>
@@ -71,16 +93,24 @@ const Index = () => {
             <p className="text-lg text-muted-foreground mb-8 max-w-[600px] mx-auto">
               Join thousands who have discovered their perfect fragrance match with our personalized recommendations.
             </p>
-            <SignedIn>
+            {isClerkAvailable ? (
+              <>
+                <MockSignedIn>
+                  <Link to="/quiz">
+                    <Button size="lg" className="font-medium">Start Your Quiz Now</Button>
+                  </Link>
+                </MockSignedIn>
+                <MockSignedOut>
+                  <Link to="/login">
+                    <Button size="lg" className="font-medium">Sign Up to Begin</Button>
+                  </Link>
+                </MockSignedOut>
+              </>
+            ) : (
               <Link to="/quiz">
                 <Button size="lg" className="font-medium">Start Your Quiz Now</Button>
               </Link>
-            </SignedIn>
-            <SignedOut>
-              <Link to="/login">
-                <Button size="lg" className="font-medium">Sign Up to Begin</Button>
-              </Link>
-            </SignedOut>
+            )}
           </div>
         </section>
       </main>

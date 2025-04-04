@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { SignedIn, SignedOut, useAuth } from "@clerk/clerk-react";
+import { SignedIn, SignedOut } from "@clerk/clerk-react";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import RecommendationQuiz from "./pages/RecommendationQuiz";
@@ -12,20 +12,18 @@ import Profile from "./pages/Profile";
 import Login from "./pages/Login";
 
 // Check if Clerk is available (has publishable key)
-const isClerkAvailable = () => {
-  return !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
-};
+const isClerkAvailable = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
 
 // Wrapper components to handle authentication state when Clerk is not available
 const MockSignedIn = ({ children }) => {
-  if (!isClerkAvailable()) {
+  if (!isClerkAvailable) {
     return <>{children}</>;
   }
   return <SignedIn>{children}</SignedIn>;
 };
 
 const MockSignedOut = ({ children }) => {
-  if (!isClerkAvailable()) {
+  if (!isClerkAvailable) {
     return null; // Always consider the user as signed in when Clerk is unavailable
   }
   return <SignedOut>{children}</SignedOut>;

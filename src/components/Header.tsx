@@ -3,6 +3,33 @@ import { Link } from "react-router-dom";
 import { SignedIn, SignedOut, UserButton } from "@clerk/clerk-react";
 import { Button } from "@/components/ui/button";
 
+// Check if Clerk is available
+const isClerkAvailable = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+
+// Mock components for when Clerk is not available
+const MockSignedIn = ({ children }) => {
+  if (!isClerkAvailable) {
+    return <>{children}</>;
+  }
+  return <SignedIn>{children}</SignedIn>;
+};
+
+const MockSignedOut = ({ children }) => {
+  if (!isClerkAvailable) {
+    return null;
+  }
+  return <SignedOut>{children}</SignedOut>;
+};
+
+const MockUserButton = () => {
+  return (
+    <Button variant="outline" size="icon" className="rounded-full w-10 h-10">
+      <span className="sr-only">User menu</span>
+      <span className="text-sm">👤</span>
+    </Button>
+  );
+};
+
 const Header = () => {
   return (
     <header className="border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
@@ -16,26 +43,26 @@ const Header = () => {
             <Link to="/" className="text-sm font-medium transition-colors hover:text-primary">
               Home
             </Link>
-            <SignedIn>
+            <MockSignedIn>
               <Link to="/quiz" className="text-sm font-medium transition-colors hover:text-primary">
                 Find Your Scent
               </Link>
-            </SignedIn>
+            </MockSignedIn>
           </nav>
         </div>
 
         <div className="flex items-center gap-4">
-          <SignedIn>
+          <MockSignedIn>
             <Link to="/profile">
               <Button variant="ghost">Profile</Button>
             </Link>
-            <UserButton afterSignOutUrl="/" />
-          </SignedIn>
-          <SignedOut>
+            {isClerkAvailable ? <UserButton afterSignOutUrl="/" /> : <MockUserButton />}
+          </MockSignedIn>
+          <MockSignedOut>
             <Link to="/login">
               <Button>Sign In</Button>
             </Link>
-          </SignedOut>
+          </MockSignedOut>
         </div>
       </div>
     </header>
