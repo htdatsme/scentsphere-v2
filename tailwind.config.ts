@@ -21,8 +21,8 @@ export default {
     },
     extend: {
       fontFamily: {
-        sans: ["var(--font-open-sans)"],
-        serif: ["var(--font-playfair)"],
+        sans: ["var(--font-open-sans)", "Inter", "system-ui", "sans-serif"],
+        serif: ["var(--font-playfair)", "Georgia", "serif"],
       },
       colors: {
         border: "hsl(var(--border))",
@@ -131,6 +131,28 @@ export default {
       backgroundImage: {
         "gradient-radial": "radial-gradient(var(--tw-gradient-stops))",
         "gradient-conic": "conic-gradient(from 180deg at 50% 50%, var(--tw-gradient-stops))",
+        "premium-gradient": "linear-gradient(to right, hsl(267, 75%, 31%), hsl(262, 80%, 50%))",
+        "card-gradient": "linear-gradient(to bottom right, hsl(var(--card)), hsl(var(--secondary)/80))",
+      },
+      boxShadow: {
+        'premium': '0 4px 14px 0 rgba(0, 0, 0, 0.1)',
+        'premium-hover': '0 6px 20px rgba(0, 0, 0, 0.15)',
+      },
+      typography: {
+        DEFAULT: {
+          css: {
+            maxWidth: '65ch',
+            color: 'hsl(var(--foreground))',
+            'h1, h2, h3, h4, h5': {
+              fontFamily: 'var(--font-playfair)',
+              fontWeight: '600',
+              letterSpacing: '-0.025em',
+            },
+            'p, ul, ol': {
+              lineHeight: '1.7',
+            },
+          },
+        },
       },
     },
   },

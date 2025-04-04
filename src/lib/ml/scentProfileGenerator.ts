@@ -117,13 +117,13 @@ export const generateScentProfile = async (
   
   // Boost notes associated with current Toronto season
   if (weather.season === 'summer') {
-    boostNotes(profile, ['Citrus', 'Fresh', 'Aquatic'], torontoSeasonInfluence);
+    boostNotes(profile, ['Citrus', 'Fresh', 'Aquatic', 'Marine', 'Bergamot'], torontoSeasonInfluence);
   } else if (weather.season === 'winter') {
-    boostNotes(profile, ['Woody', 'Oriental', 'Spicy'], torontoSeasonInfluence);
+    boostNotes(profile, ['Woody', 'Oriental', 'Spicy', 'Vanilla', 'Amber'], torontoSeasonInfluence);
   } else if (weather.season === 'fall') {
-    boostNotes(profile, ['Woody', 'Spicy', 'Amber'], torontoSeasonInfluence);
+    boostNotes(profile, ['Woody', 'Spicy', 'Amber', 'Sandalwood', 'Patchouli'], torontoSeasonInfluence);
   } else {
-    boostNotes(profile, ['Floral', 'Green', 'Fresh'], torontoSeasonInfluence);
+    boostNotes(profile, ['Floral', 'Green', 'Fresh', 'Rose', 'Jasmine'], torontoSeasonInfluence);
   }
   
   // Normalize note scores to 0-1 range
@@ -162,6 +162,14 @@ const normalizeNotes = (profile: ScentProfile) => {
 export const generateRecommendations = async (
   profile: ScentProfile
 ): Promise<typeof fragrances> => {
+  // Extract all unique notes from all fragrances for better matching
+  const allNotes = new Set<string>();
+  fragrances.forEach(fragrance => {
+    fragrance.notes.forEach(note => {
+      allNotes.add(note.name.toLowerCase());
+    });
+  });
+
   // Calculate content-based filtering scores (60%)
   const contentScores = fragrances.map(fragrance => {
     let score = 0;
@@ -172,8 +180,17 @@ export const generateRecommendations = async (
       
       // Look for matching notes in the profile
       for (const profileNote in profile.notes) {
-        if (noteName.includes(profileNote.toLowerCase())) {
-          score += profile.notes[profileNote] * 10;
+        // Check for exact match or partial match
+        const profileNoteLower = profileNote.toLowerCase();
+        if (noteName === profileNoteLower || 
+            noteName.includes(profileNoteLower) || 
+            profileNoteLower.includes(noteName)) {
+          // Weight depends on note category
+          let categoryMultiplier = 1;
+          if (noteObj.category === 'top') categoryMultiplier = 1.2;
+          if (noteObj.category === 'base') categoryMultiplier = 1.1;
+          
+          score += profile.notes[profileNote] * 10 * categoryMultiplier;
         }
       }
     });
@@ -199,6 +216,10 @@ export const generateRecommendations = async (
     const intensityDiff = Math.abs(fragrance.intensity - profile.preferences.intensity);
     score -= intensityDiff; // Reduce score based on intensity mismatch
     
+    // Add a slight randomization factor (5%) to avoid identical results across sessions
+    const randomFactor = 0.95 + (Math.random() * 0.1); // 0.95 to 1.05
+    score *= randomFactor;
+    
     return { fragrance, contentScore: score };
   });
 
@@ -207,7 +228,16 @@ export const generateRecommendations = async (
   const collaborativeScores = fragrances.map(fragrance => {
     // Placeholder collaborative score based on rating (simulating user data)
     const collab = fragrance.rating * 2;
-    return { fragrance, collabScore: collab };
+    
+    // Add some preference for newer fragrances if launch year is available
+    const currentYear = new Date().getFullYear();
+    let newnessFactor = 0;
+    if (fragrance.launchYear) {
+      const age = currentYear - fragrance.launchYear;
+      newnessFactor = Math.max(0, (10 - age) / 10); // Higher score for newer fragrances
+    }
+    
+    return { fragrance, collabScore: collab + newnessFactor };
   });
 
   // Apply Toronto weather influence (15%)
@@ -218,14 +248,14 @@ export const generateRecommendations = async (
     // For hot weather, prefer fresh/light scents
     if (weather.temperature > 20) {
       if (fragrance.categories.some(c => 
-        ['Fresh', 'Citrus', 'Aquatic'].includes(c))) {
+        ['Fresh', 'Citrus', 'Aquatic', 'Marine'].includes(c))) {
         score += 3;
       }
     }
     // For cold weather, prefer warm/heavy scents
     else if (weather.temperature < 10) {
       if (fragrance.categories.some(c => 
-        ['Oriental', 'Woody', 'Spicy', 'Gourmand'].includes(c))) {
+        ['Oriental', 'Woody', 'Spicy', 'Gourmand', 'Amber'].includes(c))) {
         score += 3;
       }
     }

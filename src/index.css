@@ -25,7 +25,7 @@
     --border: 240 5.9% 90%;
     --input: 240 5.9% 90%;
     --ring: 267 75% 31%;
-    --radius: 0.5rem;
+    --radius: 1rem;
 
     /* Fragrance-specific colors */
     --amber: 30 90% 60%;
@@ -44,25 +44,25 @@
  
   /* Dark theme */
   .dark {
-    --background: 20 14.3% 4.1%;
-    --foreground: 0 0% 95%;
-    --card: 24 9.8% 10%;
-    --card-foreground: 0 0% 95%;
-    --popover: 0 0% 9%;
-    --popover-foreground: 0 0% 95%;
-    --primary: 267 75% 41%;
-    --primary-foreground: 355 100% 97%;
-    --secondary: 240 3.7% 15.9%;
-    --secondary-foreground: 0 0% 98%;
-    --muted: 0 0% 15%;
-    --muted-foreground: 240 5% 64.9%;
+    --background: 224 71% 4%;
+    --foreground: 213 31% 91%;
+    --card: 224 71% 4%;
+    --card-foreground: 213 31% 91%;
+    --popover: 224 71% 4%;
+    --popover-foreground: 213 31% 91%;
+    --primary: 262 80% 60%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 222 47% 11%;
+    --secondary-foreground: 210 40% 98%;
+    --muted: 223 47% 11%;
+    --muted-foreground: 215 20% 65%;
     --accent: 44 80% 58%;
-    --accent-foreground: 240 5.9% 10%;
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 0 85.7% 97.3%;
-    --border: 240 3.7% 15.9%;
-    --input: 240 3.7% 15.9%;
-    --ring: 267 72% 41%;
+    --accent-foreground: 210 40% 98%;
+    --destructive: 0 63% 31%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 216 34% 17%;
+    --input: 216 34% 17%;
+    --ring: 262 80% 60%;
 
     /* Fragrance-specific colors - dark mode variants */
     --amber: 30 80% 50%;
@@ -81,25 +81,25 @@
 
   /* Professional theme */
   .professional {
-    --background: 220 20% 97%;
-    --foreground: 220 20% 10%;
+    --background: 0 0% 100%;
+    --foreground: 229 84% 5%;
     --card: 0 0% 100%;
-    --card-foreground: 220 20% 10%;
+    --card-foreground: 229 84% 5%;
     --popover: 0 0% 100%;
-    --popover-foreground: 220 20% 10%;
-    --primary: 220 60% 30%;
-    --primary-foreground: 0 0% 98%;
-    --secondary: 220 10% 90%;
-    --secondary-foreground: 220 20% 10%;
-    --muted: 220 10% 94%;
-    --muted-foreground: 220 10% 40%;
-    --accent: 220 40% 40%;
-    --accent-foreground: 0 0% 98%;
-    --destructive: 0 70% 50%;
-    --destructive-foreground: 0 0% 98%;
-    --border: 220 20% 85%;
-    --input: 220 20% 85%;
-    --ring: 220 60% 30%;
+    --popover-foreground: 229 84% 5%;
+    --primary: 229 47% 36%;
+    --primary-foreground: 210 40% 98%;
+    --secondary: 210 40% 96.1%;
+    --secondary-foreground: 229 47% 36%;
+    --muted: 210 40% 96.1%;
+    --muted-foreground: 215.4 16.3% 46.9%;
+    --accent: 210 40% 90%;
+    --accent-foreground: 229 47% 36%;
+    --destructive: 0 84.2% 60.2%;
+    --destructive-foreground: 210 40% 98%;
+    --border: 220 13% 91%;
+    --input: 220 13% 91%;
+    --ring: 229 47% 36%;
 
     /* Fragrance-specific colors - professional variants */
     --amber: 30 40% 45%;
@@ -126,7 +126,7 @@
     font-feature-settings: "rlig" 1, "calt" 1;
   }
   h1, h2, h3, h4, h5 {
-    @apply font-serif;
+    @apply font-serif tracking-tight;
   }
   p, span, button, input, textarea, select {
     @apply font-sans;
@@ -135,7 +135,7 @@
 
 @layer utilities {
   .glass {
-    @apply backdrop-blur-md bg-background/60 border border-border/30;
+    @apply backdrop-blur-md bg-background/60 border border-border/30 shadow-sm;
   }
   
   .scent-card {
@@ -157,5 +157,21 @@
     100% {
       background-position: 0% 50%;
     }
+  }
+
+  .premium-card {
+    @apply border border-border/50 rounded-xl shadow-sm hover:shadow-md transition-all duration-300;
+  }
+  
+  .premium-button {
+    @apply rounded-full shadow-sm hover:shadow transition-all;
+  }
+  
+  .premium-container {
+    @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
+  }
+  
+  .text-gradient {
+    @apply bg-gradient-to-r from-primary to-accent bg-clip-text text-transparent;
   }
 }

@@ -43,7 +43,7 @@ const Header = () => {
       <div className="container flex h-16 items-center justify-between">
         <Link to="/" className="flex items-center space-x-2">
           <Droplets className="h-6 w-6 text-primary animate-pulse-subtle" />
-          <span className="font-serif text-xl font-bold">ScentSphere</span>
+          <span className="font-serif text-xl font-bold tracking-tight">ScentSphere</span>
         </Link>
 
         {/* Desktop Navigation */}
@@ -65,12 +65,12 @@ const Header = () => {
             <MockSignedIn>
               <div className="flex items-center space-x-2">
                 <Link to="/profile">
-                  <Button variant="ghost" size="sm">
+                  <Button variant="ghost" size="sm" className="rounded-full">
                     <User className="h-4 w-4 mr-2" />
                     Profile
                   </Button>
                 </Link>
-                <Button variant="outline" size="sm" onClick={handleSignOut}>
+                <Button variant="outline" size="sm" className="rounded-full" onClick={handleSignOut}>
                   Sign Out
                 </Button>
               </div>
@@ -78,7 +78,7 @@ const Header = () => {
             <MockSignedOut>
               <div className="flex items-center space-x-2">
                 <Link to="/login">
-                  <Button size="sm">Sign In</Button>
+                  <Button size="sm" className="rounded-full">Sign In</Button>
                 </Link>
               </div>
             </MockSignedOut>
@@ -93,6 +93,7 @@ const Header = () => {
             size="icon"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
             aria-label="Toggle menu"
+            className="rounded-full"
           >
             {mobileMenuOpen ? (
               <X className="h-5 w-5" />
@@ -145,7 +146,7 @@ const Header = () => {
                       handleSignOut();
                       setMobileMenuOpen(false);
                     }}
-                    className="justify-start"
+                    className="justify-start rounded-full"
                   >
                     Sign Out
                   </Button>
@@ -156,7 +157,7 @@ const Header = () => {
                   to="/login"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  <Button size="sm" className="w-full">Sign In</Button>
+                  <Button size="sm" className="w-full rounded-full">Sign In</Button>
                 </Link>
               </MockSignedOut>
             </div>
