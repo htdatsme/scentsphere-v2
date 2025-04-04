@@ -6,6 +6,23 @@ import { Droplets, User, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import ThemeSwitcher from './ThemeSwitcher';
 
+// Mock components for when Clerk is not available
+const MockSignedIn = ({ children }) => {
+  const isClerkAvailable = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+  if (!isClerkAvailable) {
+    return <>{children}</>;
+  }
+  return <SignedIn>{children}</SignedIn>;
+};
+
+const MockSignedOut = ({ children }) => {
+  const isClerkAvailable = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+  if (!isClerkAvailable) {
+    return null; // Always consider the user as signed in when Clerk is unavailable
+  }
+  return <SignedOut>{children}</SignedOut>;
+};
+
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -45,7 +62,7 @@ const Header = () => {
 
           <div className="flex items-center space-x-2">
             <ThemeSwitcher />
-            <SignedIn>
+            <MockSignedIn>
               <div className="flex items-center space-x-2">
                 <Link to="/profile">
                   <Button variant="ghost" size="sm">
@@ -57,14 +74,14 @@ const Header = () => {
                   Sign Out
                 </Button>
               </div>
-            </SignedIn>
-            <SignedOut>
+            </MockSignedIn>
+            <MockSignedOut>
               <div className="flex items-center space-x-2">
                 <Link to="/login">
                   <Button size="sm">Sign In</Button>
                 </Link>
               </div>
-            </SignedOut>
+            </MockSignedOut>
           </div>
         </nav>
 
@@ -112,7 +129,7 @@ const Header = () => {
               Results
             </Link>
             <div className="pt-2 border-t">
-              <SignedIn>
+              <MockSignedIn>
                 <div className="flex flex-col space-y-2">
                   <Link
                     to="/profile"
@@ -133,15 +150,15 @@ const Header = () => {
                     Sign Out
                   </Button>
                 </div>
-              </SignedIn>
-              <SignedOut>
+              </MockSignedIn>
+              <MockSignedOut>
                 <Link
                   to="/login"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   <Button size="sm" className="w-full">Sign In</Button>
                 </Link>
-              </SignedOut>
+              </MockSignedOut>
             </div>
           </div>
         </div>
