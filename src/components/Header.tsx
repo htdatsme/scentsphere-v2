@@ -2,7 +2,7 @@
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
 import { useClerk, SignedIn, SignedOut } from '@clerk/clerk-react';
-import { Spray, User, Menu, X } from 'lucide-react';
+import { Droplets, User, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import ThemeSwitcher from './ThemeSwitcher';
 
@@ -23,7 +23,7 @@ const Header = () => {
     <header className="border-b bg-background/95 backdrop-blur-md supports-backdrop-blur:bg-background/60 sticky top-0 z-40 w-full">
       <div className="container flex h-16 items-center justify-between">
         <Link to="/" className="flex items-center space-x-2">
-          <Spray className="h-6 w-6 text-primary animate-pulse-subtle" />
+          <Droplets className="h-6 w-6 text-primary animate-pulse-subtle" />
           <span className="font-serif text-xl font-bold">ScentSphere</span>
         </Link>
 
