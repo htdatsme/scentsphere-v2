@@ -123,7 +123,7 @@ export class EnhancedRecommendationEngine {
             // Weight by note category
             let multiplier = 1;
             if (noteObj.category === 'top') multiplier = 1.5;
-            if (noteObj.category === 'heart') multiplier = 1.2;
+            if (noteObj.category === 'middle') multiplier = 1.2; // Changed from 'heart' to 'middle'
             if (noteObj.category === 'base') multiplier = 1.0;
             
             score += value * multiplier * 10;
