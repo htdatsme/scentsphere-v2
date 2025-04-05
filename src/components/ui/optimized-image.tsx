@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
 
@@ -80,49 +81,81 @@ export const OptimizedImage = ({
 
   // Enhanced image URL processing with robust fallback strategy
   const getOptimizedUrl = (url: string, brandName?: string) => {
+    // Add console logs for debugging
+    console.log("Processing image URL:", url);
+    console.log("Brand name:", brandName);
+    
     // If we have a specific brand fallback provided, return it
-    if (url === brandFallback && brandFallback) {
+    if (brandFallback && url === brandFallback) {
+      console.log("Using provided brand fallback:", brandFallback);
       return brandFallback;
     }
     
     // For Lovable uploads, use them directly
-    if (url.startsWith('/lovable-uploads')) {
+    if (url && url.startsWith('/lovable-uploads')) {
+      console.log("Using Lovable upload path:", url);
       return url;
     }
     
     // Handle placeholder, undefined or invalid URLs with brand fallbacks
-    if ((url.includes('placeholder') || url.endsWith('undefined') || 
-        url.includes('user-uploaded') || !url || url === '/') && brandName) {
-      return brandFallbacks[brandName] || genericFallbacks[0];
+    if (!url || url === '/' || (url && (
+        url.includes('placeholder') || 
+        url.endsWith('undefined') || 
+        url.includes('user-uploaded')))) {
+      
+      if (brandName && brandFallbacks[brandName]) {
+        console.log("Using brand fallback for:", brandName);
+        return brandFallbacks[brandName];
+      }
+      
+      console.log("Using generic fallback");
+      return genericFallbacks[0];
     }
     
     // Imgur links are already optimized
-    if (url.includes('i.imgur.com')) {
+    if (url && url.includes('i.imgur.com')) {
+      console.log("Using imgur link directly:", url);
       return url;
     }
     
     // Valid URL check and processing
     try {
-      new URL(url);
-      return url;
+      if (url && url.startsWith('http')) {
+        new URL(url);
+        console.log("Valid URL, using directly:", url);
+        return url;
+      }
+      
+      // Relative URL handling
+      if (url && (url.startsWith('./') || url.startsWith('/'))) {
+        console.log("Using relative URL:", url);
+        return url;
+      }
+      
+      throw new Error("Invalid URL");
     } catch (e) {
+      console.log("Invalid URL, falling back:", e);
+      
       // Brand-specific fallback
       if (brandName && brandFallbacks[brandName]) {
+        console.log("Falling back to brand image for:", brandName);
         return brandFallbacks[brandName];
       }
       
       // Generic product fallback
       if (loadAttempts < 3) {
+        console.log("Using generic fallback image");
         return genericFallbacks[loadAttempts % genericFallbacks.length];
       }
       
       // Default placeholder
+      console.log("Using default placeholder");
       return placeholder;
     }
   };
 
   useEffect(() => {
-    const brandName = alt.split(' - ')[0] || undefined;
+    const brandName = alt?.split(' - ')[0] || undefined;
     
     // Reset state when src changes
     setImgSrc(getOptimizedUrl(src, brandName));
@@ -132,36 +165,51 @@ export const OptimizedImage = ({
   }, [src, alt]);
 
   const handleError = () => {
+    console.log("Image error occurred for:", imgSrc);
     setError(true);
     setLoadAttempts(prev => prev + 1);
     
-    const brandName = alt.split(' - ')[0] || undefined;
+    const brandName = alt?.split(' - ')[0] || undefined;
     
     // Progressive fallback strategy
     if (brandName && brandFallbacks[brandName]) {
       // Try brand-specific fallback first
+      console.log("Trying brand fallback for:", brandName);
       setImgSrc(brandFallbacks[brandName]);
     } 
     else if (brandFallback && imgSrc !== brandFallback) {
       // Try provided fallback next
+      console.log("Trying provided fallback:", brandFallback);
       setImgSrc(brandFallback);
     } 
     else if (loadAttempts < genericFallbacks.length) {
       // Try generic fallbacks in sequence
+      console.log("Trying generic fallback #", loadAttempts);
       setImgSrc(genericFallbacks[loadAttempts % genericFallbacks.length]);
     }
     else if (imgSrc !== placeholder && placeholder) {
       // Fall back to placeholder
+      console.log("Falling back to placeholder");
       setImgSrc(placeholder);
     }
     else {
       // Last resort fallback
+      console.log("Last resort fallback");
       setImgSrc('https://i.imgur.com/VYcN5jR.jpg');
     }
   };
 
   // Calculate responsive dimensions based on screen size
   const getResponsiveDimensions = () => {
+    if (isMobile === undefined) {
+      // Default while loading
+      return { 
+        width: '100%', 
+        height: 'auto',
+        maxWidth: width 
+      };
+    }
+    
     if (isMobile) {
       // On mobile, images can take up to 100% width
       return { 
@@ -192,7 +240,7 @@ export const OptimizedImage = ({
       
       <img
         src={imgSrc}
-        alt={alt}
+        alt={alt || "Product image"}
         width={width}
         height={height}
         onLoad={() => setLoading(false)}
@@ -205,7 +253,7 @@ export const OptimizedImage = ({
       
       {error && loadAttempts > genericFallbacks.length && (
         <div className="absolute bottom-0 left-0 right-0 bg-black/70 text-white text-xs p-1 text-center">
-          {alt.split(' - ')[1] || alt}
+          {alt?.split(' - ')[1] || alt || "Image failed to load"}
         </div>
       )}
     </div>
