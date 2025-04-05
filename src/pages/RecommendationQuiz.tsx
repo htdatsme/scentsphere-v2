@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import Header from "@/components/Header";
@@ -12,10 +13,12 @@ import { UserQuizAnswers, QuizFactorId } from "@/types/quiz";
 import { generateScentProfile } from "@/lib/ml/scentProfileGenerator";
 import { scentModel } from "@/lib/ml/tensorflowModel";
 import { toast } from "sonner";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 const RecommendationQuiz = () => {
   const navigate = useNavigate();
   const { setUserPreferences, completeQuiz, setRecommendations, setLoading } = useRecommendationStore();
+  const isMobile = useIsMobile();
   
   const [currentStep, setCurrentStep] = useState(0);
   const [quizAnswers, setQuizAnswers] = useState<UserQuizAnswers>({});
@@ -113,11 +116,11 @@ const RecommendationQuiz = () => {
   return (
     <div className="flex flex-col min-h-screen">
       <Header />
-      <main className="flex-1 container py-10">
-        <div className="max-w-3xl mx-auto">
+      <main className="flex-1 container py-6 md:py-10">
+        <div className="max-w-3xl mx-auto px-4 md:px-0">
           {/* Progress indicator */}
-          <div className="mb-8">
-            <div className="flex justify-between mb-2">
+          <div className="mb-6 md:mb-8">
+            <div className="flex justify-between mb-2 text-sm md:text-base">
               <span>Question {currentStep + 1} of {quizFactors.length}</span>
               <span>{Math.round(((currentStep + 1) / quizFactors.length) * 100)}% complete</span>
             </div>
@@ -129,16 +132,16 @@ const RecommendationQuiz = () => {
             </div>
           </div>
 
-          <Card>
-            <CardHeader>
-              <CardTitle className="text-2xl font-serif">{currentFactor.title}</CardTitle>
-              <CardDescription>{currentFactor.description}</CardDescription>
+          <Card className="border shadow-sm">
+            <CardHeader className="pb-4 md:pb-6">
+              <CardTitle className="text-xl md:text-2xl font-serif">{currentFactor.title}</CardTitle>
+              <CardDescription className="text-sm md:text-base">{currentFactor.description}</CardDescription>
             </CardHeader>
-            <CardContent>
+            <CardContent className="pb-4 md:pb-6">
               <RadioGroup
                 value={quizAnswers[currentFactor.id]}
                 onValueChange={(value) => updateAnswer(currentFactor.id, value)}
-                className="grid grid-cols-1 md:grid-cols-2 gap-4"
+                className="grid grid-cols-1 md:grid-cols-2 gap-3 md:gap-4"
               >
                 {currentFactor.options.map((option) => (
                   <div key={option.value}>
@@ -149,7 +152,7 @@ const RecommendationQuiz = () => {
                     />
                     <Label
                       htmlFor={option.value}
-                      className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer"
+                      className="flex flex-col items-center justify-between rounded-md border-2 border-muted bg-popover p-3 md:p-4 hover:bg-accent hover:text-accent-foreground peer-data-[state=checked]:border-primary [&:has([data-state=checked])]:border-primary cursor-pointer transition-colors"
                     >
                       <span className="font-medium mb-1">{option.label}</span>
                     </Label>
@@ -157,15 +160,21 @@ const RecommendationQuiz = () => {
                 ))}
               </RadioGroup>
             </CardContent>
-            <CardFooter className="flex justify-between">
+            <CardFooter className="flex justify-between pt-2 md:pt-4">
               <Button 
                 variant="outline" 
                 onClick={handlePrevStep}
                 disabled={currentStep === 0}
+                className="px-3 md:px-4"
+                size={isMobile ? "sm" : "default"}
               >
                 Back
               </Button>
-              <Button onClick={handleNextStep}>
+              <Button 
+                onClick={handleNextStep}
+                className="px-3 md:px-4"
+                size={isMobile ? "sm" : "default"}
+              >
                 {currentStep === quizFactors.length - 1 ? "Complete" : "Next"}
               </Button>
             </CardFooter>

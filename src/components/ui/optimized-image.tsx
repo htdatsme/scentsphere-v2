@@ -1,5 +1,5 @@
-
 import { useState, useEffect } from 'react';
+import { useIsMobile } from '@/hooks/use-mobile';
 
 interface OptimizedImageProps {
   src: string;
@@ -10,6 +10,7 @@ interface OptimizedImageProps {
   brandFallback?: string;
   placeholder?: string;
   priority?: boolean;
+  sizes?: string;
 }
 
 export const OptimizedImage = ({
@@ -21,11 +22,13 @@ export const OptimizedImage = ({
   brandFallback,
   placeholder = '/placeholder.svg',
   priority = false,
+  sizes = '(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw',
 }: OptimizedImageProps) => {
   const [imgSrc, setImgSrc] = useState<string>(src);
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
   const [loadAttempts, setLoadAttempts] = useState<number>(0);
+  const isMobile = useIsMobile();
 
   // Enhanced brand fallback database with high-quality images
   const brandFallbacks: Record<string, string> = {
@@ -157,10 +160,28 @@ export const OptimizedImage = ({
     }
   };
 
+  // Calculate responsive dimensions based on screen size
+  const getResponsiveDimensions = () => {
+    if (isMobile) {
+      // On mobile, images can take up to 100% width
+      return { 
+        width: '100%', 
+        height: 'auto',
+        maxWidth: width 
+      };
+    }
+    return { 
+      width, 
+      height 
+    };
+  };
+
+  const responsiveDimensions = getResponsiveDimensions();
+
   return (
     <div 
       className={`relative overflow-hidden ${className}`} 
-      style={{ width, height }}
+      style={responsiveDimensions}
       data-testid="optimized-image-container"
     >
       {loading && (
@@ -178,6 +199,7 @@ export const OptimizedImage = ({
         onError={handleError}
         className={`object-cover w-full h-full transition-opacity duration-300 ${loading ? 'opacity-0' : 'opacity-100'}`}
         loading={priority ? 'eager' : 'lazy'}
+        sizes={sizes}
         data-testid="optimized-image"
       />
       
