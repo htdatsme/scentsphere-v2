@@ -79,122 +79,134 @@ export const OptimizedImage = ({
     'https://i.imgur.com/VXrx0LU.jpg'  // Minimalist fragrance bottle
   ];
 
+  // Validate URL function
+  const isValidUrl = (urlString: string): boolean => {
+    try {
+      const url = new URL(urlString);
+      return url.protocol === 'http:' || url.protocol === 'https:';
+    } catch {
+      return false;
+    }
+  };
+
   // Enhanced image URL processing with robust fallback strategy
   const getOptimizedUrl = (url: string, brandName?: string) => {
-    // Add console logs for debugging
-    console.log("Processing image URL:", url);
-    console.log("Brand name:", brandName);
+    // Critical debug console logs
+    console.log("IMAGE DEBUG - Processing URL:", url);
+    console.log("IMAGE DEBUG - Brand name:", brandName);
+    console.log("IMAGE DEBUG - Is valid URL:", isValidUrl(url));
     
-    // If we have a specific brand fallback provided, return it
-    if (brandFallback && url === brandFallback) {
-      console.log("Using provided brand fallback:", brandFallback);
-      return brandFallback;
-    }
-    
-    // For Lovable uploads, use them directly
-    if (url && url.startsWith('/lovable-uploads')) {
-      console.log("Using Lovable upload path:", url);
-      return url;
-    }
-    
-    // Handle placeholder, undefined or invalid URLs with brand fallbacks
-    if (!url || url === '/' || (url && (
-        url.includes('placeholder') || 
-        url.endsWith('undefined') || 
-        url.includes('user-uploaded')))) {
-      
+    // Handle undefined or null URLs immediately
+    if (!url) {
+      console.log("IMAGE DEBUG - URL is undefined or null");
       if (brandName && brandFallbacks[brandName]) {
-        console.log("Using brand fallback for:", brandName);
+        console.log("IMAGE DEBUG - Using brand fallback for undefined URL:", brandFallbacks[brandName]);
         return brandFallbacks[brandName];
       }
-      
-      console.log("Using generic fallback");
+      console.log("IMAGE DEBUG - Using generic fallback for undefined URL");
       return genericFallbacks[0];
     }
     
-    // Imgur links are already optimized
-    if (url && url.includes('i.imgur.com')) {
-      console.log("Using imgur link directly:", url);
+    // For Lovable uploads, use them directly
+    if (url.startsWith('/lovable-uploads')) {
+      console.log("IMAGE DEBUG - Using Lovable upload path:", url);
       return url;
     }
     
-    // Valid URL check and processing
-    try {
-      if (url && url.startsWith('http')) {
-        new URL(url);
-        console.log("Valid URL, using directly:", url);
-        return url;
+    // For relative paths
+    if (url.startsWith('./') || url.startsWith('/')) {
+      // Make sure we're not dealing with a placeholder or undefined path
+      if (url.includes('placeholder') || url.includes('undefined')) {
+        console.log("IMAGE DEBUG - Relative path contains placeholder or undefined:", url);
+        if (brandName && brandFallbacks[brandName]) {
+          return brandFallbacks[brandName];
+        }
+        return genericFallbacks[0];
       }
       
-      // Relative URL handling
-      if (url && (url.startsWith('./') || url.startsWith('/'))) {
-        console.log("Using relative URL:", url);
-        return url;
-      }
-      
-      throw new Error("Invalid URL");
-    } catch (e) {
-      console.log("Invalid URL, falling back:", e);
-      
-      // Brand-specific fallback
-      if (brandName && brandFallbacks[brandName]) {
-        console.log("Falling back to brand image for:", brandName);
-        return brandFallbacks[brandName];
-      }
-      
-      // Generic product fallback
-      if (loadAttempts < 3) {
-        console.log("Using generic fallback image");
-        return genericFallbacks[loadAttempts % genericFallbacks.length];
-      }
-      
-      // Default placeholder
-      console.log("Using default placeholder");
-      return placeholder;
+      console.log("IMAGE DEBUG - Using relative URL:", url);
+      return url;
     }
+    
+    // Check if it's an imgur URL (which we know works)
+    if (url.includes('i.imgur.com')) {
+      console.log("IMAGE DEBUG - Using imgur link directly:", url);
+      return url;
+    }
+    
+    // Handle URL that should be absolute
+    if (isValidUrl(url)) {
+      console.log("IMAGE DEBUG - Using validated absolute URL:", url);
+      return url;
+    }
+    
+    // By this point, we have an invalid URL - use fallbacks
+    console.log("IMAGE DEBUG - URL is invalid, using fallbacks");
+    
+    // Brand-specific fallback
+    if (brandName && brandFallbacks[brandName]) {
+      console.log("IMAGE DEBUG - Falling back to brand image for:", brandName);
+      return brandFallbacks[brandName];
+    }
+    
+    // Generic product fallback
+    if (loadAttempts < genericFallbacks.length) {
+      console.log("IMAGE DEBUG - Using generic fallback image #", loadAttempts);
+      return genericFallbacks[loadAttempts % genericFallbacks.length];
+    }
+    
+    // Last resort - default placeholder
+    console.log("IMAGE DEBUG - Using default placeholder");
+    return placeholder;
   };
 
   useEffect(() => {
     const brandName = alt?.split(' - ')[0] || undefined;
     
     // Reset state when src changes
-    setImgSrc(getOptimizedUrl(src, brandName));
+    console.log("IMAGE DEBUG - Source changed to:", src);
+    const optimizedUrl = getOptimizedUrl(src, brandName);
+    console.log("IMAGE DEBUG - Optimized to:", optimizedUrl);
+    
+    setImgSrc(optimizedUrl);
     setLoading(true);
     setError(false);
     setLoadAttempts(0);
   }, [src, alt]);
 
   const handleError = () => {
-    console.log("Image error occurred for:", imgSrc);
+    console.log("IMAGE DEBUG - Error loading image:", imgSrc);
     setError(true);
     setLoadAttempts(prev => prev + 1);
     
     const brandName = alt?.split(' - ')[0] || undefined;
+    console.log("IMAGE DEBUG - Load attempts:", loadAttempts + 1);
     
     // Progressive fallback strategy
-    if (brandName && brandFallbacks[brandName]) {
+    if (brandName && brandFallbacks[brandName] && imgSrc !== brandFallbacks[brandName]) {
       // Try brand-specific fallback first
-      console.log("Trying brand fallback for:", brandName);
+      console.log("IMAGE DEBUG - Trying brand fallback for:", brandName);
       setImgSrc(brandFallbacks[brandName]);
     } 
     else if (brandFallback && imgSrc !== brandFallback) {
       // Try provided fallback next
-      console.log("Trying provided fallback:", brandFallback);
+      console.log("IMAGE DEBUG - Trying provided fallback:", brandFallback);
       setImgSrc(brandFallback);
     } 
     else if (loadAttempts < genericFallbacks.length) {
       // Try generic fallbacks in sequence
-      console.log("Trying generic fallback #", loadAttempts);
-      setImgSrc(genericFallbacks[loadAttempts % genericFallbacks.length]);
+      const fallbackUrl = genericFallbacks[loadAttempts % genericFallbacks.length];
+      console.log("IMAGE DEBUG - Trying generic fallback:", fallbackUrl);
+      setImgSrc(fallbackUrl);
     }
     else if (imgSrc !== placeholder && placeholder) {
       // Fall back to placeholder
-      console.log("Falling back to placeholder");
+      console.log("IMAGE DEBUG - Falling back to placeholder");
       setImgSrc(placeholder);
     }
     else {
-      // Last resort fallback
-      console.log("Last resort fallback");
+      // Absolute last resort fallback
+      console.log("IMAGE DEBUG - Last resort fallback");
       setImgSrc('https://i.imgur.com/VYcN5jR.jpg');
     }
   };
@@ -243,7 +255,10 @@ export const OptimizedImage = ({
         alt={alt || "Product image"}
         width={width}
         height={height}
-        onLoad={() => setLoading(false)}
+        onLoad={() => {
+          console.log("IMAGE DEBUG - Image loaded successfully:", imgSrc);
+          setLoading(false);
+        }}
         onError={handleError}
         className={`object-cover w-full h-full transition-opacity duration-300 ${loading ? 'opacity-0' : 'opacity-100'}`}
         loading={priority ? 'eager' : 'lazy'}
