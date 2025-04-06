@@ -1,14 +1,15 @@
 
 import { brandFallbacks, genericFallbacks, defaultPlaceholder, isValidUrl } from './fallbackStrategy';
+import { validateImagePath, normalizePath, checkPublicImage } from './imageValidator';
 
 /**
  * Processes and optimizes an image URL with fallback strategy
  */
-export const processImageUrl = (
+export const processImageUrl = async (
   url: string | undefined, 
   brandName?: string,
   attemptNumber: number = 0
-): string => {
+): Promise<string> => {
   // Log initial URL information for debugging
   console.log("Image processing - Input URL:", url);
   console.log("Image processing - Brand name:", brandName);
@@ -24,37 +25,61 @@ export const processImageUrl = (
     return genericFallbacks[0];
   }
   
+  // Normalize the URL (handling require() and import.meta.url)
+  const normalizedUrl = normalizePath(url);
+  
   // For Lovable uploads, use them directly (already optimized)
-  if (url.startsWith('/lovable-uploads')) {
+  if (normalizedUrl.startsWith('/lovable-uploads')) {
     console.log("Image processing - Using Lovable upload path");
-    return url;
+    return normalizedUrl;
   }
   
   // For other relative paths in public folder
-  if (url.startsWith('./') || url.startsWith('/')) {
-    // Make sure we're not dealing with a placeholder or undefined path
-    if (url.includes('placeholder') || url.includes('undefined')) {
-      console.log("Image processing - Relative path contains placeholder or undefined:", url);
+  if (normalizedUrl.startsWith('./') || normalizedUrl.startsWith('/')) {
+    // Check if the public image exists
+    const exists = await checkPublicImage(normalizedUrl);
+    
+    if (!exists) {
+      console.log("Image processing - Public image doesn't exist:", normalizedUrl);
       if (brandName && brandFallbacks[brandName]) {
         return brandFallbacks[brandName];
       }
       return genericFallbacks[0];
     }
     
-    console.log("Image processing - Using relative URL");
-    return url;
+    // Make sure we're not dealing with a placeholder or undefined path
+    if (normalizedUrl.includes('placeholder') || normalizedUrl.includes('undefined')) {
+      console.log("Image processing - Relative path contains placeholder or undefined:", normalizedUrl);
+      if (brandName && brandFallbacks[brandName]) {
+        return brandFallbacks[brandName];
+      }
+      return genericFallbacks[0];
+    }
+    
+    console.log("Image processing - Using validated relative URL");
+    return normalizedUrl;
   }
   
   // Check if it's an imgur URL (which we know works well as CDN)
-  if (url.includes('i.imgur.com')) {
+  if (normalizedUrl.includes('i.imgur.com')) {
     console.log("Image processing - Using imgur link directly");
-    return url;
+    // Validate imgur image existence
+    const isValid = await validateImagePath(normalizedUrl);
+    if (isValid) {
+      return normalizedUrl;
+    } else {
+      console.log("Image processing - Imgur image not valid, falling back");
+    }
   }
   
   // Handle URL that should be absolute
-  if (isValidUrl(url)) {
-    console.log("Image processing - Using validated absolute URL");
-    return url;
+  if (isValidUrl(normalizedUrl)) {
+    // Validate absolute URL image existence
+    const isValid = await validateImagePath(normalizedUrl);
+    if (isValid) {
+      console.log("Image processing - Using validated absolute URL");
+      return normalizedUrl;
+    }
   }
   
   // By this point, we have an invalid URL - use fallbacks
@@ -74,5 +99,54 @@ export const processImageUrl = (
   
   // Last resort - default placeholder
   console.log("Image processing - Using default placeholder");
+  return defaultPlaceholder;
+};
+
+// Creating a synchronous version for backward compatibility
+export const processImageUrlSync = (
+  url: string | undefined, 
+  brandName?: string,
+  attemptNumber: number = 0
+): string => {
+  // Similar logic but synchronous
+  if (!url) {
+    if (brandName && brandFallbacks[brandName]) {
+      return brandFallbacks[brandName];
+    }
+    return genericFallbacks[0];
+  }
+  
+  const normalizedUrl = normalizePath(url);
+  
+  if (normalizedUrl.startsWith('/lovable-uploads')) {
+    return normalizedUrl;
+  }
+  
+  if (normalizedUrl.startsWith('./') || normalizedUrl.startsWith('/')) {
+    if (normalizedUrl.includes('placeholder') || normalizedUrl.includes('undefined')) {
+      if (brandName && brandFallbacks[brandName]) {
+        return brandFallbacks[brandName];
+      }
+      return genericFallbacks[0];
+    }
+    return normalizedUrl;
+  }
+  
+  if (normalizedUrl.includes('i.imgur.com')) {
+    return normalizedUrl;
+  }
+  
+  if (isValidUrl(normalizedUrl)) {
+    return normalizedUrl;
+  }
+  
+  if (brandName && brandFallbacks[brandName]) {
+    return brandFallbacks[brandName];
+  }
+  
+  if (attemptNumber < genericFallbacks.length) {
+    return genericFallbacks[attemptNumber];
+  }
+  
   return defaultPlaceholder;
 };

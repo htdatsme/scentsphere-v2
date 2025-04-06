@@ -1,8 +1,9 @@
 
 import { useState, useEffect } from 'react';
 import { useIsMobile } from '@/hooks/use-mobile';
-import { processImageUrl } from '@/lib/image/imageUrlProcessor';
+import { processImageUrl, processImageUrlSync } from '@/lib/image/imageUrlProcessor';
 import { extractBrandName } from '@/lib/image/fallbackStrategy';
+import { validateImagePath } from '@/lib/image/imageValidator';
 
 interface OptimizedImageProps {
   src: string;
@@ -27,7 +28,7 @@ export const OptimizedImage = ({
   priority = false,
   sizes = '(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 33vw',
 }: OptimizedImageProps) => {
-  const [imgSrc, setImgSrc] = useState<string>(src);
+  const [imgSrc, setImgSrc] = useState<string>(processImageUrlSync(src, extractBrandName(alt)));
   const [loading, setLoading] = useState<boolean>(true);
   const [error, setError] = useState<boolean>(false);
   const [loadAttempts, setLoadAttempts] = useState<number>(0);
@@ -38,17 +39,22 @@ export const OptimizedImage = ({
     const brandName = extractBrandName(alt);
     console.log("OptimizedImage - Source changed to:", src);
     
-    const optimizedUrl = processImageUrl(src, brandName);
-    console.log("OptimizedImage - Optimized to:", optimizedUrl);
+    // Use async process image
+    const processImage = async () => {
+      const optimizedUrl = await processImageUrl(src, brandName);
+      console.log("OptimizedImage - Optimized to:", optimizedUrl);
+      
+      setImgSrc(optimizedUrl);
+      setLoading(true);
+      setError(false);
+      setLoadAttempts(0);
+    };
     
-    setImgSrc(optimizedUrl);
-    setLoading(true);
-    setError(false);
-    setLoadAttempts(0);
+    processImage();
   }, [src, alt]);
 
   // Handle image loading error with progressive fallback strategy
-  const handleError = () => {
+  const handleError = async () => {
     console.error("OptimizedImage - Error loading image:", imgSrc);
     setError(true);
     
@@ -60,7 +66,7 @@ export const OptimizedImage = ({
     const brandName = extractBrandName(alt);
     
     // Get next fallback in the hierarchy
-    const nextFallback = processImageUrl(src, brandName, newAttempt);
+    const nextFallback = await processImageUrl(src, brandName, newAttempt);
     
     // Only update if we have a different URL to try
     if (nextFallback !== imgSrc) {
