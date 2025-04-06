@@ -5,6 +5,7 @@ import { Trash2, Heart } from "lucide-react";
 import { useUserProfile } from "@/hooks/useUserProfile";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Fragrance } from "@/lib/store";
+import { Link } from "react-router-dom";
 
 export function SavedFragrances() {
   const { savedFragrances, loading, removeFragrance } = useUserProfile();
@@ -138,7 +139,7 @@ function FragranceDetailsDialog({ fragrance }: { fragrance: Fragrance }) {
               <div className="flex flex-wrap gap-1">
                 {fragrance.notes.map((note, i) => (
                   <span key={i} className="text-xs bg-secondary px-2 py-1 rounded-full">
-                    {note}
+                    {typeof note === 'string' ? note : note.name}
                   </span>
                 ))}
               </div>
@@ -149,6 +150,3 @@ function FragranceDetailsDialog({ fragrance }: { fragrance: Fragrance }) {
     </Dialog>
   );
 }
-
-// Import Link at the top
-import { Link } from "react-router-dom";

@@ -11,9 +11,10 @@ import Results from "./pages/Results";
 import Profile from "./pages/Profile";
 import Login from "./pages/Login";
 import { useAuth } from "@/contexts/AuthContext";
+import { ReactNode } from "react";
 
 // Protected route component
-const ProtectedRoute = ({ children }) => {
+const ProtectedRoute = ({ children }: { children: ReactNode }) => {
   const { user, loading } = useAuth();
   
   if (loading) return <div className="flex h-screen items-center justify-center">Loading...</div>;
@@ -22,7 +23,7 @@ const ProtectedRoute = ({ children }) => {
     return <Navigate to="/login" />;
   }
   
-  return children;
+  return <>{children}</>;
 };
 
 const App = () => (

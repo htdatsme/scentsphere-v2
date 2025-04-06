@@ -53,7 +53,7 @@ export function useUserProfile() {
           .maybeSingle();
 
         if (preferencesError) throw preferencesError;
-        setPreferences(preferencesData);
+        setPreferences(preferencesData as UserPreferences | null);
 
         // Fetch collection
         const { data: collectionData, error: collectionError } = await supabase
@@ -62,17 +62,18 @@ export function useUserProfile() {
           .eq('user_id', user.id);
 
         if (collectionError) throw collectionError;
-        setCollection(collectionData || []);
+        setCollection(collectionData as FragranceCollection[] || []);
 
         // For now, we'll just set saved fragrances based on IDs
         // In a real app, you'd fetch the full fragrance data from your API
         if (collectionData && collectionData.length > 0) {
           // Here we'd normally fetch the full fragrance data
           // For now, we'll get them from local recommendations
-          const { recommendations } = JSON.parse(localStorage.getItem('fragrance-recommendations') || '{"recommendations":[]}');
+          const storedData = localStorage.getItem('fragrance-recommendations');
+          const { recommendations } = storedData ? JSON.parse(storedData) : { recommendations: [] };
           
           if (recommendations && recommendations.length > 0) {
-            const savedIds = collectionData.map(item => item.fragrance_id);
+            const savedIds = (collectionData as FragranceCollection[]).map(item => item.fragrance_id);
             const saved = recommendations.filter(fragrance => savedIds.includes(fragrance.id));
             setSavedFragrances(saved);
           }
@@ -107,7 +108,7 @@ export function useUserProfile() {
 
       if (error) throw error;
 
-      setCollection(prev => [...prev, data]);
+      setCollection(prev => [...prev, data as FragranceCollection]);
       setSavedFragrances(prev => [...prev, fragrance]);
       toast.success(`Added "${fragrance.name}" to your collection`);
       return true;
