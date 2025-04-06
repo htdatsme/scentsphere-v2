@@ -12,6 +12,7 @@ import Profile from "./pages/Profile";
 import Login from "./pages/Login";
 import { useAuth } from "@/contexts/AuthContext";
 import { ReactNode } from "react";
+import ImageDiagnosticsPage from "./pages/ImageDiagnosticsPage";
 
 // Protected route component
 const ProtectedRoute = ({ children }: { children: ReactNode }) => {
@@ -36,6 +37,7 @@ const App = () => (
           {/* Public routes */}
           <Route path="/" element={<Index />} />
           <Route path="/login" element={<Login />} />
+          <Route path="/image-diagnostics" element={<ImageDiagnosticsPage />} />
           
           {/* Protected routes */}
           <Route

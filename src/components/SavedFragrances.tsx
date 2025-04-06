@@ -6,6 +6,7 @@ import { useUserProfile } from "@/hooks/useUserProfile";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Fragrance } from "@/lib/store";
 import { Link } from "react-router-dom";
+import ImageWithFallback from "@/components/ImageWithFallback";
 
 export function SavedFragrances() {
   const { savedFragrances, loading, removeFragrance } = useUserProfile();
@@ -67,9 +68,10 @@ function FragranceCard({ fragrance, onRemove }: { fragrance: Fragrance; onRemove
   return (
     <Card className="overflow-hidden group">
       <div className="aspect-square overflow-hidden relative">
-        <img 
+        <ImageWithFallback 
           src={fragrance.imageUrl} 
-          alt={fragrance.name} 
+          alt={`${fragrance.brand} - ${fragrance.name}`} 
+          brandName={fragrance.brand}
           className="w-full h-full object-cover transition-transform group-hover:scale-105"
         />
         <div className="absolute top-2 right-2">
@@ -110,9 +112,10 @@ function FragranceDetailsDialog({ fragrance }: { fragrance: Fragrance }) {
         </DialogHeader>
         <div className="grid gap-4 py-4">
           <div className="grid grid-cols-4 items-center gap-4">
-            <img 
+            <ImageWithFallback 
               src={fragrance.imageUrl} 
-              alt={fragrance.name} 
+              alt={`${fragrance.brand} - ${fragrance.name}`} 
+              brandName={fragrance.brand}
               className="col-span-4 aspect-square object-cover rounded-md"
             />
           </div>
