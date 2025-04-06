@@ -2,7 +2,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
-import { processImageUrl } from '@/lib/image/imageUrlProcessor';
+import { processImageUrl, processImageUrlSync } from '@/lib/image/imageUrlProcessor';
 import { brandFallbacks, genericFallbacks } from '@/lib/image/fallbackStrategy';
 import { extractBrandName } from '@/lib/image/fallbackStrategy';
 import { useToast } from '@/hooks/use-toast';
@@ -79,9 +79,12 @@ export default function ImageDiagnostics({ onClose }: ImageDiagnosticsProps) {
             const startTime = performance.now();
             const brandName = extractBrandName(img.alt);
             
+            // Use sync version to avoid Promise issues
+            const processedSrc = processImageUrlSync(img.src, brandName);
+            
             const entry: ImageDiagnosticsLogEntry = {
               originalSrc: img.src,
-              processedSrc: processImageUrl(img.src, brandName),
+              processedSrc: processedSrc,
               alt: img.alt,
               brandName,
               loaded: false,

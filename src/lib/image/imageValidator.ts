@@ -1,3 +1,4 @@
+
 /**
  * Utility to validate image paths and check for their existence
  */
@@ -74,6 +75,8 @@ export const normalizePath = (path: string): string => {
  * @param path Relative path from public directory
  */
 export const checkPublicImage = async (path: string): Promise<boolean> => {
+  if (!path) return false;
+  
   // Ensure path starts with / for public directory
   const publicPath = path.startsWith('/') ? path : `/${path}`;
   

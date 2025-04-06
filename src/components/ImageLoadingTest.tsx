@@ -1,10 +1,10 @@
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { processImageUrl } from '@/lib/image/imageUrlProcessor';
+import { processImageUrl, processImageUrlSync } from '@/lib/image/imageUrlProcessor';
 import OptimizedImage from '@/components/ui/optimized-image';
 import ImageWithFallback from '@/components/ImageWithFallback';
 
@@ -17,6 +17,22 @@ export default function ImageLoadingTest() {
     processedUrl?: string;
     error?: string;
   }[]>([]);
+  const [processedImageUrl, setProcessedImageUrl] = useState<string>('');
+  
+  // Process the URL when it changes
+  useEffect(() => {
+    if (imageUrl && altText) {
+      const brandName = altText.split(' - ')[0];
+      
+      // Use the async function and store the result
+      const processUrl = async () => {
+        const url = await processImageUrl(imageUrl, brandName);
+        setProcessedImageUrl(url);
+      };
+      
+      processUrl();
+    }
+  }, [imageUrl, altText]);
   
   const runAllTests = () => {
     setTestResults([]);
@@ -61,36 +77,43 @@ export default function ImageLoadingTest() {
     img.src = imageUrl;
   };
   
-  const testProcessedUrl = () => {
+  const testProcessedUrl = async () => {
     const brandName = altText.split(' - ')[0];
-    const processedUrl = processImageUrl(imageUrl, brandName);
+    const syncProcessedUrl = processImageUrlSync(imageUrl, brandName);
     
+    // Add entry immediately with sync processed URL
+    setTestResults(prev => [
+      ...prev,
+      {
+        component: 'Processed URL',
+        success: true,
+        processedUrl: syncProcessedUrl
+      }
+    ]);
+    
+    // Then test if it loads
     const img = new Image();
     
     img.onload = () => {
-      setTestResults(prev => [
-        ...prev,
-        {
-          component: 'Processed URL',
-          success: true,
-          processedUrl
-        }
-      ]);
+      // URL loaded successfully, nothing to update
     };
     
     img.onerror = () => {
-      setTestResults(prev => [
-        ...prev,
-        {
-          component: 'Processed URL',
-          success: false,
-          processedUrl,
-          error: 'Failed to load processed image'
-        }
-      ]);
+      // URL failed to load, update the entry
+      setTestResults(prev => 
+        prev.map(result => 
+          result.component === 'Processed URL'
+            ? {
+                ...result,
+                success: false,
+                error: 'Failed to load processed image'
+              }
+            : result
+        )
+      );
     };
     
-    img.src = processedUrl;
+    img.src = syncProcessedUrl;
   };
   
   const testOptimizedImage = () => {
@@ -220,7 +243,7 @@ export default function ImageLoadingTest() {
                   <h4 className="text-sm font-medium mb-2">Processed URL</h4>
                   <div className="aspect-square w-48 mx-auto bg-muted/30 flex items-center justify-center">
                     <img 
-                      src={processImageUrl(imageUrl, brandName)} 
+                      src={processedImageUrl || processImageUrlSync(imageUrl, brandName)} 
                       alt={altText} 
                       className="max-w-full max-h-full object-contain"
                       onError={(e) => {
@@ -230,7 +253,7 @@ export default function ImageLoadingTest() {
                     />
                   </div>
                   <div className="mt-2 text-xs text-muted-foreground">
-                    <pre className="whitespace-pre-wrap break-all">{processImageUrl(imageUrl, brandName)}</pre>
+                    <pre className="whitespace-pre-wrap break-all">{processedImageUrl || processImageUrlSync(imageUrl, brandName)}</pre>
                   </div>
                 </div>
               </TabsContent>

@@ -102,7 +102,7 @@ export const processImageUrl = async (
   return defaultPlaceholder;
 };
 
-// Creating a synchronous version for backward compatibility
+// Synchronous version that returns a string immediately, not a Promise
 export const processImageUrlSync = (
   url: string | undefined, 
   brandName?: string,
