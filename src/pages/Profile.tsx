@@ -7,13 +7,54 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useRecommendationStore } from "@/lib/store";
 import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
 
 const Profile = () => {
-  const { user } = useUser();
+  const [isClerkAvailable, setIsClerkAvailable] = useState(false);
+  const [userLoaded, setUserLoaded] = useState(false);
+  const [userData, setUserData] = useState<any>(null);
   const { userPreferences, recommendations, resetQuiz } = useRecommendationStore();
-
-  if (!user) {
-    return <div>Loading...</div>;
+  
+  // Check if Clerk is available
+  useEffect(() => {
+    const hasClerkKey = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
+    setIsClerkAvailable(hasClerkKey);
+    
+    // If Clerk isn't available, create mock user data
+    if (!hasClerkKey) {
+      setUserData({
+        firstName: "Demo",
+        lastName: "User",
+        imageUrl: "https://i.imgur.com/QVKzs0R.jpg",
+        primaryEmailAddress: { emailAddress: "demo@example.com" }
+      });
+      setUserLoaded(true);
+    }
+  }, []);
+  
+  // Only use Clerk's useUser if Clerk is available
+  const clerkUser = isClerkAvailable ? useUser() : { user: null, isLoaded: false };
+  
+  // Once Clerk user is loaded, set the user data
+  useEffect(() => {
+    if (isClerkAvailable && clerkUser.isLoaded) {
+      setUserData(clerkUser.user);
+      setUserLoaded(true);
+    }
+  }, [isClerkAvailable, clerkUser.isLoaded, clerkUser.user]);
+  
+  if (!userLoaded) {
+    return (
+      <div className="flex flex-col min-h-screen">
+        <Header />
+        <main className="flex-1 container py-10">
+          <div className="flex justify-center items-center h-full">
+            <div className="shimmer-effect h-12 w-48 rounded-md"></div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    );
   }
 
   return (
@@ -23,15 +64,17 @@ const Profile = () => {
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center gap-6 mb-8">
             <img
-              src={user.imageUrl}
-              alt={user.firstName || "User"}
+              src={userData.imageUrl}
+              alt={userData.firstName || "User"}
               className="w-24 h-24 rounded-full object-cover border-4 border-background shadow-md"
             />
             <div>
               <h1 className="text-3xl font-serif font-bold">
-                {user.firstName} {user.lastName}
+                {userData.firstName} {userData.lastName}
               </h1>
-              <p className="text-muted-foreground">{user.primaryEmailAddress?.emailAddress}</p>
+              {userData.primaryEmailAddress && (
+                <p className="text-muted-foreground">{userData.primaryEmailAddress.emailAddress}</p>
+              )}
             </div>
           </div>
 
