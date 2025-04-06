@@ -34,18 +34,23 @@ export const validateImagePath = async (path: string): Promise<boolean> => {
     };
     
     // Set crossOrigin for CORS images
-    if (normalizedPath.startsWith('http')) {
+    if (normalizedPath && normalizedPath.startsWith('http')) {
       img.crossOrigin = 'anonymous';
     }
     
-    img.src = normalizedPath;
+    img.src = normalizedPath || '';
   });
 };
 
 /**
  * Normalizes different path formats to a standard URL
  */
-export const normalizePath = (path: string): string => {
+export const normalizePath = (path: string | null | undefined): string => {
+  // Handle null or undefined paths
+  if (path === null || path === undefined) {
+    return '';
+  }
+  
   // Handle require() format
   if (typeof path === 'object' && path !== null && 'default' in path) {
     return path.default;
@@ -102,4 +107,42 @@ export const getFirstValidPath = async (paths: string[]): Promise<string | undef
     }
   }
   return undefined;
+};
+
+/**
+ * Gets the responsive image URLs for different screen sizes
+ * @param basePath Base path for the image
+ * @param formats Additional formats like webp
+ * @returns Object with urls for different screen sizes
+ */
+export const getResponsiveImageUrls = (
+  basePath: string,
+  formats: string[] = ['jpg', 'webp']
+): Record<string, string> => {
+  // If basePath is empty or invalid, return empty object
+  if (!basePath) return {};
+  
+  // Extract file name without extension
+  const basePathWithoutExt = basePath.replace(/\.[^/.]+$/, '');
+  const result: Record<string, string> = {};
+  
+  // Common screen breakpoints
+  const sizes = {
+    sm: '320w',   // Small mobile
+    md: '768w',   // Mobile
+    lg: '1024w',  // Tablet
+    xl: '1440w',  // Desktop
+    '2xl': '1920w', // Large desktop
+  };
+  
+  // Generate paths for each size and format
+  Object.entries(sizes).forEach(([size, width]) => {
+    formats.forEach(format => {
+      // For example: path/image-320w.webp
+      const key = `${size}_${format}`;
+      result[key] = `${basePathWithoutExt}-${width}.${format}`;
+    });
+  });
+  
+  return result;
 };

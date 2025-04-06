@@ -8,10 +8,14 @@ interface ImageWithFallbackProps {
   height?: number;
   className?: string;
   brandName?: string;
+  responsive?: boolean;
+  sizes?: string;
+  priority?: boolean;
 }
 
 /**
  * Image component that showcases the proper implementation of fallback strategy
+ * with responsive image support for better mobile performance
  */
 const ImageWithFallback = ({
   src,
@@ -19,10 +23,16 @@ const ImageWithFallback = ({
   width = 400,
   height = 400,
   className = '',
-  brandName
+  brandName,
+  responsive = true,
+  sizes,
+  priority = false
 }: ImageWithFallbackProps) => {
   // Construct full alt text with brand name for better fallback support
   const fullAlt = brandName ? `${brandName} - ${alt}` : alt;
+  
+  // Default responsive sizes based on common breakpoints
+  const defaultSizes = '(max-width: 320px) 100vw, (max-width: 768px) 90vw, (max-width: 1024px) 50vw, 33vw';
   
   return (
     <OptimizedImage
@@ -31,7 +41,9 @@ const ImageWithFallback = ({
       width={width}
       height={height}
       className={className}
-      priority={false}
+      priority={priority}
+      responsive={responsive}
+      sizes={sizes || defaultSizes}
     />
   );
 };

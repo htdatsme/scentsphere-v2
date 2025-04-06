@@ -1,6 +1,8 @@
+
 import * as React from "react"
 import useEmblaCarousel, {
   type UseEmblaCarouselType,
+  EmblaOptionsType,
 } from "embla-carousel-react"
 import { ArrowLeft, ArrowRight } from "lucide-react"
 
@@ -56,8 +58,21 @@ const Carousel = React.forwardRef<
     },
     ref
   ) => {
+    // Enhanced default options for better touch support
+    const defaultOptions: EmblaOptionsType = {
+      loop: false,
+      align: "start",
+      skipSnaps: false,
+      draggable: true,
+      dragFree: false,
+      // Improved touch settings
+      inViewThreshold: 0.7,
+      containScroll: "trimSnaps",
+    }
+
     const [carouselRef, api] = useEmblaCarousel(
       {
+        ...defaultOptions,
         ...opts,
         axis: orientation === "horizontal" ? "x" : "y",
       },
@@ -204,10 +219,11 @@ const CarouselPrevious = React.forwardRef<
       variant={variant}
       size={size}
       className={cn(
-        "absolute  h-8 w-8 rounded-full",
+        "absolute h-8 w-8 rounded-full",
         orientation === "horizontal"
-          ? "-left-12 top-1/2 -translate-y-1/2"
+          ? "-left-12 top-1/2 -translate-y-1/2 md:-left-12 sm:left-3 xs:left-2"
           : "-top-12 left-1/2 -translate-x-1/2 rotate-90",
+        "sm:opacity-80 sm:bg-background/80 sm:backdrop-blur-sm sm:border sm:border-border/50 sm:shadow-sm",
         className
       )}
       disabled={!canScrollPrev}
@@ -235,8 +251,9 @@ const CarouselNext = React.forwardRef<
       className={cn(
         "absolute h-8 w-8 rounded-full",
         orientation === "horizontal"
-          ? "-right-12 top-1/2 -translate-y-1/2"
+          ? "-right-12 top-1/2 -translate-y-1/2 md:-right-12 sm:right-3 xs:right-2"
           : "-bottom-12 left-1/2 -translate-x-1/2 rotate-90",
+        "sm:opacity-80 sm:bg-background/80 sm:backdrop-blur-sm sm:border sm:border-border/50 sm:shadow-sm",
         className
       )}
       disabled={!canScrollNext}
@@ -250,6 +267,57 @@ const CarouselNext = React.forwardRef<
 })
 CarouselNext.displayName = "CarouselNext"
 
+// New Touch-friendly Dot indicators
+interface CarouselDotsProps extends React.HTMLAttributes<HTMLDivElement> {
+  count: number;
+  activeDotClassName?: string;
+  dotClassName?: string;
+}
+
+const CarouselDots = React.forwardRef<HTMLDivElement, CarouselDotsProps>(
+  ({ className, count, activeDotClassName, dotClassName, ...props }, ref) => {
+    const { api } = useCarousel();
+    const [activeIndex, setActiveIndex] = React.useState(0);
+
+    React.useEffect(() => {
+      if (!api) return;
+      
+      const onSelect = () => {
+        setActiveIndex(api.selectedScrollSnap());
+      };
+      
+      api.on("select", onSelect);
+      return () => {
+        api.off("select", onSelect);
+      };
+    }, [api]);
+
+    return (
+      <div 
+        ref={ref}
+        className={cn("flex justify-center gap-1 py-2", className)} 
+        {...props}
+      >
+        {Array.from({ length: count }).map((_, index) => (
+          <button
+            key={index}
+            type="button"
+            className={cn(
+              "h-2 w-2 rounded-full transition-all",
+              index === activeIndex 
+                ? cn("bg-primary scale-125", activeDotClassName) 
+                : cn("bg-muted hover:bg-muted-foreground/50", dotClassName),
+            )}
+            onClick={() => api?.scrollTo(index)}
+            aria-label={`Go to slide ${index + 1}`}
+          />
+        ))}
+      </div>
+    );
+  }
+);
+CarouselDots.displayName = "CarouselDots";
+
 export {
   type CarouselApi,
   Carousel,
@@ -257,4 +325,5 @@ export {
   CarouselItem,
   CarouselPrevious,
   CarouselNext,
+  CarouselDots,
 }
