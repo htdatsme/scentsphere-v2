@@ -1,42 +1,14 @@
 
 import { Link } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { useClerk, SignedIn, SignedOut } from '@clerk/clerk-react';
 import { Droplets, User, Menu, X } from 'lucide-react';
 import { useState } from 'react';
 import ThemeSwitcher from './ThemeSwitcher';
-
-// Mock components for when Clerk is not available
-const MockSignedIn = ({ children }) => {
-  const isClerkAvailable = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
-  if (!isClerkAvailable) {
-    return <>{children}</>;
-  }
-  return <SignedIn>{children}</SignedIn>;
-};
-
-const MockSignedOut = ({ children }) => {
-  const isClerkAvailable = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
-  if (!isClerkAvailable) {
-    return null; // Always consider the user as signed in when Clerk is unavailable
-  }
-  return <SignedOut>{children}</SignedOut>;
-};
+import { useAuth } from '@/contexts/AuthContext';
 
 const Header = () => {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
-
-  // Check if Clerk is available (has publishable key)
-  const isClerkAvailable = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
-  
-  // Only use the useClerk hook if Clerk is available
-  const clerkInstance = isClerkAvailable ? useClerk() : null;
-  
-  const handleSignOut = () => {
-    if (isClerkAvailable && clerkInstance) {
-      clerkInstance.signOut();
-    }
-  };
+  const { user, signOut, loading } = useAuth();
 
   return (
     <header className="border-b bg-background/95 backdrop-blur-md supports-backdrop-blur:bg-background/60 sticky top-0 z-40 w-full">
@@ -62,26 +34,29 @@ const Header = () => {
 
           <div className="flex items-center space-x-2">
             <ThemeSwitcher />
-            <MockSignedIn>
-              <div className="flex items-center space-x-2">
-                <Link to="/profile">
-                  <Button variant="ghost" size="sm" className="rounded-full">
-                    <User className="h-4 w-4 mr-2" />
-                    Profile
-                  </Button>
-                </Link>
-                <Button variant="outline" size="sm" className="rounded-full" onClick={handleSignOut}>
-                  Sign Out
-                </Button>
-              </div>
-            </MockSignedIn>
-            <MockSignedOut>
-              <div className="flex items-center space-x-2">
-                <Link to="/login">
-                  <Button size="sm" className="rounded-full">Sign In</Button>
-                </Link>
-              </div>
-            </MockSignedOut>
+            {!loading && (
+              <>
+                {user ? (
+                  <div className="flex items-center space-x-2">
+                    <Link to="/profile">
+                      <Button variant="ghost" size="sm" className="rounded-full">
+                        <User className="h-4 w-4 mr-2" />
+                        Profile
+                      </Button>
+                    </Link>
+                    <Button variant="outline" size="sm" className="rounded-full" onClick={() => signOut()}>
+                      Sign Out
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="flex items-center space-x-2">
+                    <Link to="/login">
+                      <Button size="sm" className="rounded-full">Sign In</Button>
+                    </Link>
+                  </div>
+                )}
+              </>
+            )}
           </div>
         </nav>
 
@@ -130,36 +105,39 @@ const Header = () => {
               Results
             </Link>
             <div className="pt-2 border-t">
-              <MockSignedIn>
-                <div className="flex flex-col space-y-2">
-                  <Link
-                    to="/profile"
-                    className="block py-2 text-sm font-medium hover:text-primary"
-                    onClick={() => setMobileMenuOpen(false)}
-                  >
-                    Profile
-                  </Link>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      handleSignOut();
-                      setMobileMenuOpen(false);
-                    }}
-                    className="justify-start rounded-full"
-                  >
-                    Sign Out
-                  </Button>
-                </div>
-              </MockSignedIn>
-              <MockSignedOut>
-                <Link
-                  to="/login"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  <Button size="sm" className="w-full rounded-full">Sign In</Button>
-                </Link>
-              </MockSignedOut>
+              {!loading && (
+                <>
+                  {user ? (
+                    <div className="flex flex-col space-y-2">
+                      <Link
+                        to="/profile"
+                        className="block py-2 text-sm font-medium hover:text-primary"
+                        onClick={() => setMobileMenuOpen(false)}
+                      >
+                        Profile
+                      </Link>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => {
+                          signOut();
+                          setMobileMenuOpen(false);
+                        }}
+                        className="justify-start rounded-full"
+                      >
+                        Sign Out
+                      </Button>
+                    </div>
+                  ) : (
+                    <Link
+                      to="/login"
+                      onClick={() => setMobileMenuOpen(false)}
+                    >
+                      <Button size="sm" className="w-full rounded-full">Sign In</Button>
+                    </Link>
+                  )}
+                </>
+              )}
             </div>
           </div>
         </div>

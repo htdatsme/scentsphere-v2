@@ -2,31 +2,27 @@
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import { SignedIn, SignedOut } from "@clerk/clerk-react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
 import Index from "./pages/Index";
 import NotFound from "./pages/NotFound";
 import RecommendationQuiz from "./pages/RecommendationQuiz";
 import Results from "./pages/Results";
 import Profile from "./pages/Profile";
 import Login from "./pages/Login";
+import { useAuth } from "@/contexts/AuthContext";
 
-// Check if Clerk is available (has publishable key)
-const isClerkAvailable = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
-
-// Wrapper components to handle authentication state when Clerk is not available
-const MockSignedIn = ({ children }) => {
-  if (!isClerkAvailable) {
-    return <>{children}</>;
+// Protected route component
+const ProtectedRoute = ({ children }) => {
+  const { user, loading } = useAuth();
+  
+  if (loading) return <div className="flex h-screen items-center justify-center">Loading...</div>;
+  
+  if (!user) {
+    return <Navigate to="/login" />;
   }
-  return <SignedIn>{children}</SignedIn>;
-};
-
-const MockSignedOut = ({ children }) => {
-  if (!isClerkAvailable) {
-    return null; // Always consider the user as signed in when Clerk is unavailable
-  }
-  return <SignedOut>{children}</SignedOut>;
+  
+  return children;
 };
 
 const App = () => (
@@ -34,55 +30,42 @@ const App = () => (
     <Toaster />
     <Sonner />
     <BrowserRouter>
-      <Routes>
-        {/* Public routes */}
-        <Route path="/" element={<Index />} />
-        <Route path="/login" element={<Login />} />
-        
-        {/* Protected routes */}
-        <Route
-          path="/quiz"
-          element={
-            <>
-              <MockSignedIn>
+      <AuthProvider>
+        <Routes>
+          {/* Public routes */}
+          <Route path="/" element={<Index />} />
+          <Route path="/login" element={<Login />} />
+          
+          {/* Protected routes */}
+          <Route
+            path="/quiz"
+            element={
+              <ProtectedRoute>
                 <RecommendationQuiz />
-              </MockSignedIn>
-              <MockSignedOut>
-                <Login />
-              </MockSignedOut>
-            </>
-          }
-        />
-        <Route
-          path="/results"
-          element={
-            <>
-              <MockSignedIn>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/results"
+            element={
+              <ProtectedRoute>
                 <Results />
-              </MockSignedIn>
-              <MockSignedOut>
-                <Login />
-              </MockSignedOut>
-            </>
-          }
-        />
-        <Route
-          path="/profile"
-          element={
-            <>
-              <MockSignedIn>
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute>
                 <Profile />
-              </MockSignedIn>
-              <MockSignedOut>
-                <Login />
-              </MockSignedOut>
-            </>
-          }
-        />
-        
-        {/* Catch-all */}
-        <Route path="*" element={<NotFound />} />
-      </Routes>
+              </ProtectedRoute>
+            }
+          />
+          
+          {/* Catch-all */}
+          <Route path="*" element={<NotFound />} />
+        </Routes>
+      </AuthProvider>
     </BrowserRouter>
   </TooltipProvider>
 );

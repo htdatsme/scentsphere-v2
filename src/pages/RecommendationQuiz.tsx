@@ -14,14 +14,18 @@ import { generateScentProfile } from "@/lib/ml/scentProfileGenerator";
 import { scentModel } from "@/lib/ml/tensorflowModel";
 import { toast } from "sonner";
 import { useIsMobile } from "@/hooks/use-mobile";
+import { useUserProfile } from "@/hooks/useUserProfile";
+import { supabase } from "@/integrations/supabase/client";
 
 const RecommendationQuiz = () => {
   const navigate = useNavigate();
   const { setUserPreferences, completeQuiz, setRecommendations, setLoading } = useRecommendationStore();
+  const { updatePreferences } = useUserProfile();
   const isMobile = useIsMobile();
   
   const [currentStep, setCurrentStep] = useState(0);
   const [quizAnswers, setQuizAnswers] = useState<UserQuizAnswers>({});
+  const [syncToAccount, setSyncToAccount] = useState(true);
 
   // Convert legacy preferences structure to work with existing store
   const convertToLegacyPreferences = (answers: UserQuizAnswers): UserPreferences => {
@@ -93,6 +97,25 @@ const RecommendationQuiz = () => {
         // Store the quiz answers in localStorage to use for later model improvement
         localStorage.setItem('lastQuizAnswers', JSON.stringify(quizAnswers));
         
+        // Sync to Supabase if requested
+        if (syncToAccount) {
+          try {
+            await updatePreferences({
+              gender_preference: legacyPreferences.gender,
+              intensity: legacyPreferences.intensity,
+              price_min: legacyPreferences.priceRange[0],
+              price_max: legacyPreferences.priceRange[1],
+              seasons: legacyPreferences.seasonalPreferences,
+              occasions: legacyPreferences.occasions,
+              preferred_notes: legacyPreferences.notes
+            });
+            toast.success("Preferences saved to your account");
+          } catch (error) {
+            console.error("Failed to save preferences to account:", error);
+            // Continue even if sync fails - don't block the user
+          }
+        }
+        
         completeQuiz();
         navigate("/results");
       } catch (error) {
@@ -159,6 +182,23 @@ const RecommendationQuiz = () => {
                   </div>
                 ))}
               </RadioGroup>
+              
+              {currentStep === quizFactors.length - 1 && (
+                <div className="mt-6">
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="checkbox"
+                      id="sync-preferences"
+                      checked={syncToAccount}
+                      onChange={(e) => setSyncToAccount(e.target.checked)}
+                      className="h-4 w-4"
+                    />
+                    <label htmlFor="sync-preferences">
+                      Save preferences to my account
+                    </label>
+                  </div>
+                </div>
+              )}
             </CardContent>
             <CardFooter className="flex justify-between pt-2 md:pt-4">
               <Button 

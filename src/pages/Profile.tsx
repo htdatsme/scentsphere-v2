@@ -1,49 +1,39 @@
 
-import { useUser } from "@clerk/clerk-react";
 import Header from "@/components/Header";
 import Footer from "@/components/Footer";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useRecommendationStore } from "@/lib/store";
 import { Link } from "react-router-dom";
 import { useState, useEffect } from "react";
+import { useAuth } from "@/contexts/AuthContext";
+import { useUserProfile } from "@/hooks/useUserProfile";
+import { useRecommendationStore } from "@/lib/store";
+import { SavedFragrances } from "@/components/SavedFragrances";
+import { Separator } from "@/components/ui/separator";
+import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import { Input } from "@/components/ui/input";
+import { toast } from "sonner";
+import { z } from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
 
 const Profile = () => {
-  const [isClerkAvailable, setIsClerkAvailable] = useState(false);
-  const [userLoaded, setUserLoaded] = useState(false);
-  const [userData, setUserData] = useState<any>(null);
+  const { user, loading: authLoading } = useAuth();
+  const { preferences, savedFragrances, loading: profileLoading, updatePreferences } = useUserProfile();
   const { userPreferences, recommendations, resetQuiz } = useRecommendationStore();
   
-  // Check if Clerk is available
+  const [isLoading, setIsLoading] = useState(true);
+  
   useEffect(() => {
-    const hasClerkKey = !!import.meta.env.VITE_CLERK_PUBLISHABLE_KEY;
-    setIsClerkAvailable(hasClerkKey);
-    
-    // If Clerk isn't available, create mock user data
-    if (!hasClerkKey) {
-      setUserData({
-        firstName: "Demo",
-        lastName: "User",
-        imageUrl: "https://i.imgur.com/QVKzs0R.jpg",
-        primaryEmailAddress: { emailAddress: "demo@example.com" }
-      });
-      setUserLoaded(true);
+    // Wait for both auth and profile data to load
+    if (!authLoading && !profileLoading) {
+      setIsLoading(false);
     }
-  }, []);
+  }, [authLoading, profileLoading]);
   
-  // Only use Clerk's useUser if Clerk is available
-  const clerkUser = isClerkAvailable ? useUser() : { user: null, isLoaded: false };
-  
-  // Once Clerk user is loaded, set the user data
-  useEffect(() => {
-    if (isClerkAvailable && clerkUser.isLoaded) {
-      setUserData(clerkUser.user);
-      setUserLoaded(true);
-    }
-  }, [isClerkAvailable, clerkUser.isLoaded, clerkUser.user]);
-  
-  if (!userLoaded) {
+  if (isLoading) {
     return (
       <div className="flex flex-col min-h-screen">
         <Header />
@@ -64,16 +54,17 @@ const Profile = () => {
         <div className="max-w-4xl mx-auto">
           <div className="flex items-center gap-6 mb-8">
             <img
-              src={userData.imageUrl}
-              alt={userData.firstName || "User"}
+              src={user?.user_metadata?.avatar_url || "https://i.imgur.com/QVKzs0R.jpg"}
+              alt={user?.user_metadata?.full_name || "User"}
               className="w-24 h-24 rounded-full object-cover border-4 border-background shadow-md"
             />
             <div>
               <h1 className="text-3xl font-serif font-bold">
-                {userData.firstName} {userData.lastName}
+                {user?.user_metadata?.first_name || user?.email?.split('@')[0]}{' '}
+                {user?.user_metadata?.last_name || ''}
               </h1>
-              {userData.primaryEmailAddress && (
-                <p className="text-muted-foreground">{userData.primaryEmailAddress.emailAddress}</p>
+              {user?.email && (
+                <p className="text-muted-foreground">{user.email}</p>
               )}
             </div>
           </div>
@@ -81,7 +72,7 @@ const Profile = () => {
           <Tabs defaultValue="preferences">
             <TabsList className="grid w-full grid-cols-3">
               <TabsTrigger value="preferences">Scent Preferences</TabsTrigger>
-              <TabsTrigger value="favorites">Favorites</TabsTrigger>
+              <TabsTrigger value="favorites">My Collection</TabsTrigger>
               <TabsTrigger value="settings">Account Settings</TabsTrigger>
             </TabsList>
             
@@ -150,6 +141,14 @@ const Profile = () => {
                       <Link to="/quiz">
                         <Button>Update Preferences</Button>
                       </Link>
+                      
+                      {userPreferences && preferences && (
+                        <SyncPreferencesDialog 
+                          userPreferences={userPreferences} 
+                          dbPreferences={preferences}
+                          updatePreferences={updatePreferences}
+                        />
+                      )}
                     </div>
                   </CardContent>
                 </Card>
@@ -205,18 +204,13 @@ const Profile = () => {
             <TabsContent value="favorites" className="mt-6">
               <Card>
                 <CardHeader>
-                  <CardTitle>Your Favorite Fragrances</CardTitle>
+                  <CardTitle>Your Fragrance Collection</CardTitle>
                   <CardDescription>
-                    You haven't saved any fragrances yet.
+                    Fragrances you've saved to your collection
                   </CardDescription>
                 </CardHeader>
-                <CardContent className="text-center py-10">
-                  <p className="text-muted-foreground mb-6">
-                    When you find fragrances you love, save them here for quick reference.
-                  </p>
-                  <Link to="/results">
-                    <Button>See Your Recommendations</Button>
-                  </Link>
+                <CardContent>
+                  <SavedFragrances />
                 </CardContent>
               </Card>
             </TabsContent>
@@ -245,8 +239,17 @@ const Profile = () => {
                       <label htmlFor="privacy">Allow anonymous usage data collection to improve recommendations</label>
                     </div>
                   </div>
+                  
+                  <Separator />
+                  
+                  <div>
+                    <h3 className="font-medium mb-4">Account Information</h3>
+                    <AccountSettings user={user} />
+                  </div>
 
-                  <div className="pt-4 border-t">
+                  <Separator />
+
+                  <div className="pt-4">
                     <h3 className="font-medium mb-2 text-destructive">Danger Zone</h3>
                     <Button variant="destructive">Delete Account</Button>
                   </div>
@@ -260,5 +263,180 @@ const Profile = () => {
     </div>
   );
 };
+
+function SyncPreferencesDialog({ userPreferences, dbPreferences, updatePreferences }) {
+  const [isSyncing, setIsSyncing] = useState(false);
+  
+  const handleSync = async () => {
+    setIsSyncing(true);
+    try {
+      await updatePreferences({
+        gender_preference: userPreferences.gender,
+        intensity: userPreferences.intensity,
+        price_min: userPreferences.priceRange[0],
+        price_max: userPreferences.priceRange[1],
+        seasons: userPreferences.seasonalPreferences,
+        occasions: userPreferences.occasions,
+        preferred_notes: userPreferences.notes
+      });
+      toast.success("Preferences synced to your account");
+    } catch (error) {
+      console.error("Failed to sync preferences:", error);
+      toast.error("Failed to sync preferences");
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+  
+  return (
+    <Dialog>
+      <DialogTrigger asChild>
+        <Button variant="secondary">Save to Account</Button>
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Save Preferences to Account</DialogTitle>
+          <DialogDescription>
+            This will save your current quiz preferences to your account, making them available on all your devices.
+          </DialogDescription>
+        </DialogHeader>
+        <div className="py-4">
+          <p className="text-sm text-muted-foreground mb-4">
+            Your account will be updated with the following preferences:
+          </p>
+          <ul className="text-sm space-y-2">
+            <li><strong>Gender:</strong> {userPreferences.gender}</li>
+            <li><strong>Intensity:</strong> {userPreferences.intensity}/10</li>
+            <li><strong>Price Range:</strong> ${userPreferences.priceRange[0]} - ${userPreferences.priceRange[1]}</li>
+            <li><strong>Seasons:</strong> {userPreferences.seasonalPreferences.join(", ")}</li>
+            <li><strong>Occasions:</strong> {userPreferences.occasions.join(", ")}</li>
+            <li><strong>Notes:</strong> {userPreferences.notes.join(", ")}</li>
+          </ul>
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => {}}>Cancel</Button>
+          <Button onClick={handleSync} disabled={isSyncing}>
+            {isSyncing ? "Saving..." : "Save Preferences"}
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+const accountFormSchema = z.object({
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  email: z.string().email("Please enter a valid email"),
+});
+
+type AccountFormValues = z.infer<typeof accountFormSchema>;
+
+function AccountSettings({ user }) {
+  const form = useForm<AccountFormValues>({
+    resolver: zodResolver(accountFormSchema),
+    defaultValues: {
+      firstName: user?.user_metadata?.first_name || "",
+      lastName: user?.user_metadata?.last_name || "",
+      email: user?.email || "",
+    },
+  });
+  
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  
+  const onSubmit = async (data: AccountFormValues) => {
+    setIsSaving(true);
+    try {
+      // In a real app, we would update the user's information in Supabase here
+      // For now, we'll just show a success message
+      toast.success("Account information updated");
+      setIsEditing(false);
+    } catch (error) {
+      console.error("Failed to update account:", error);
+      toast.error("Failed to update account information");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+  
+  return (
+    <Form {...form}>
+      <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+        <div className="grid grid-cols-2 gap-4">
+          <FormField
+            control={form.control}
+            name="firstName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>First Name</FormLabel>
+                <FormControl>
+                  <Input {...field} disabled={!isEditing} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+          <FormField
+            control={form.control}
+            name="lastName"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Last Name</FormLabel>
+                <FormControl>
+                  <Input {...field} disabled={!isEditing} />
+                </FormControl>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        </div>
+        <FormField
+          control={form.control}
+          name="email"
+          render={({ field }) => (
+            <FormItem>
+              <FormLabel>Email</FormLabel>
+              <FormControl>
+                <Input {...field} disabled={true} />
+              </FormControl>
+              <FormDescription>
+                Your email cannot be changed
+              </FormDescription>
+              <FormMessage />
+            </FormItem>
+          )}
+        />
+        <div className="flex justify-end space-x-4 pt-2">
+          {isEditing ? (
+            <>
+              <Button 
+                type="button" 
+                variant="outline" 
+                onClick={() => setIsEditing(false)}
+                disabled={isSaving}
+              >
+                Cancel
+              </Button>
+              <Button 
+                type="submit"
+                disabled={isSaving}
+              >
+                {isSaving ? "Saving..." : "Save Changes"}
+              </Button>
+            </>
+          ) : (
+            <Button 
+              type="button" 
+              onClick={() => setIsEditing(true)}
+            >
+              Edit Information
+            </Button>
+          )}
+        </div>
+      </form>
+    </Form>
+  );
+}
 
 export default Profile;

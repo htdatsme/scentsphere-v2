@@ -9,6 +9,30 @@ export type Json =
 export type Database = {
   public: {
     Tables: {
+      fragrance_collections: {
+        Row: {
+          created_at: string
+          fragrance_id: number
+          id: string
+          notes: string | null
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          fragrance_id: number
+          id?: string
+          notes?: string | null
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          fragrance_id?: number
+          id?: string
+          notes?: string | null
+          user_id?: string
+        }
+        Relationships: []
+      }
       Messages: {
         Row: {
           content: string | null
@@ -129,6 +153,48 @@ export type Database = {
           related_user_id?: string | null
           status?: string | null
           user_id?: string | null
+        }
+        Relationships: []
+      }
+      user_preferences: {
+        Row: {
+          created_at: string
+          gender_preference: string | null
+          id: string
+          intensity: number | null
+          occasions: string[] | null
+          preferred_notes: string[] | null
+          price_max: number | null
+          price_min: number | null
+          seasons: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          gender_preference?: string | null
+          id?: string
+          intensity?: number | null
+          occasions?: string[] | null
+          preferred_notes?: string[] | null
+          price_max?: number | null
+          price_min?: number | null
+          seasons?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          gender_preference?: string | null
+          id?: string
+          intensity?: number | null
+          occasions?: string[] | null
+          preferred_notes?: string[] | null
+          price_max?: number | null
+          price_min?: number | null
+          seasons?: string[] | null
+          updated_at?: string
+          user_id?: string
         }
         Relationships: []
       }
